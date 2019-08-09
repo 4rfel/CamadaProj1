@@ -13,24 +13,6 @@ print("comecou")
 from enlace import *
 import time
 
-import cv2
-
-
-print("OpenCV Version : %s " % cv2.__version__)
-
-cap = cv2.VideoCapture(0)
-
-cap.set(cv2.CAP_PROP_FRAME_WIDTH,320/2)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240/2)
-
-ret, frame = cap.read()
-
-cap.release()
-
-cv2.imwrite("foto_original.png", frame)
-
-
-
 # Serial Com Port
 #   para saber a sua porta, execute no terminal :
 #   python -m serial.tools.list_ports
@@ -55,7 +37,7 @@ def main():
     print("-------------------------")
 
     # Carrega dados
-    print ("gerando dados para transmissao :")
+    #print ("gerando dados para transmissao :")
   
       #no exemplo estamos gerando uma lista de bytes ou dois bytes concatenados
     
@@ -68,15 +50,13 @@ def main():
     #exemplo2
 
     # txBuffer = bytes([2]) + bytes([3])+ bytes("teste", 'utf-8')
-    with open("foto_original.png", "rb") as foto:
-      txBuffer = foto.read()
     
-    txLen    = len(txBuffer)
-    print(txLen)
+    #txLen    = len(txBuffer)
+    #print(txLen)
 
     # Transmite dado
-    print("tentado transmitir .... {} bytes".format(txLen))
-    com.sendData(txBuffer)
+    #print("tentado transmitir .... {} bytes".format(txLen))
+    #com.sendData(txBuffer)
 
     # espera o fim da transmissão
     #while(com.tx.getIsBussy()):
@@ -84,19 +64,22 @@ def main():
     
     
     # Atualiza dados da transmissão
-    txSize = com.tx.getStatus()
-    print ("Transmitido       {} bytes ".format(txSize))
-
+    #txSize = com.tx.getStatus()
+    #print ("Transmitido       {} bytes ".format(txSize))
+    txLen, nTx = com.getData(30000)
+    print("TxLen =" + str(txLen))
     # Faz a recepção dos dados
     print ("Recebendo dados .... ")
     
     #repare que o tamanho da mensagem a ser lida é conhecida!     
     rxBuffer, nRx = com.getData(txLen)
 
-    f = open("foto_copiada.png", "wb")
-    f.write(rxBuffer)
-    f.close()
+    with open("foto_recebida.png", "wb") as foto:
+      foto.write(rxBuffer)
     
+    #Retransmitir o tamanho
+    
+    com.sendData(nRx)
 
     # log
     print ("Lido              {} bytes ".format(nRx))
