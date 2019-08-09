@@ -67,14 +67,21 @@ def main():
     
     #exemplo2
 
-    # txBuffer = bytes([2]) + bytes([3])+ bytes("teste", 'utf-8')
-    with open("foto_original.png", "rb") as foto:
+    # txBuffer = bytes([3]) + bytes([3]) + bytes([3]) + bytes([3]) + bytes([3]) + bytes([3]) + bytes([3]) + bytes([3]) 
+    with open("aaaa.png", "rb") as foto:
       txBuffer = foto.read()
-    
     txLen    = len(txBuffer)
     print(txLen)
 
+    #Transmite tamanho da foto
+    aaa = bytes(str(txLen), "utf-8")
+    print("tamanho do txLen em bytes {}".format(len(aaa)))
+    start_time = time.time()
+    com.sendData(aaa)
+
+
     # Transmite dado
+    time.sleep(0.01)
     print("tentado transmitir .... {} bytes".format(txLen))
     com.sendData(txBuffer)
 
@@ -91,24 +98,27 @@ def main():
     print ("Recebendo dados .... ")
     
     #repare que o tamanho da mensagem a ser lida é conhecida!     
-    rxBuffer, nRx = com.getData(txLen)
-
-    f = open("foto_copiada.png", "wb")
-    f.write(rxBuffer)
-    f.close()
+    rxBuffer, nRx = com.getData(txLen) #rxBuffer tamanho recebido pelo jao
+    
+    # with open("foto_copiada.png", "wb") as f:
+    #   f.write(rxBuffer)
     
 
     # log
-    print ("Lido              {} bytes ".format(nRx))
+    # print ("Lido              {} bytes ".format(nRx))
     
-    print (rxBuffer)
+    # print (rxBuffer)
+    size_jao = int(rxBuffer)
+    if (size_jao == txLen):
+      elapsed_time = time.time() - start_time
+      print("Deu bom, os 2 tem o tamanho de {0} \no tempo total foi de {1} com um byterate de {2} t/bytes".format(size_jao, elapsed_time, elapsed_time/txLen))
+    else:
+      print("Não deu bom, tamanho transmitido {0}, tamanho recebido {1}".format(txLen, size_jao))
 
-    
-
-    # Encerra comunicação
-    print("-------------------------")
-    print("Comunicação encerrada")
-    print("-------------------------")
+    # # Encerra comunicação
+    # print("-------------------------")
+    # print("Comunicação encerrada")
+    # print("-------------------------")
     com.disable()
 
     #so roda o main quando for executado do terminal ... se for chamado dentro de outro modulo nao roda
