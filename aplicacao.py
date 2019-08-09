@@ -93,7 +93,7 @@ def main():
     #repare que o tamanho da mensagem a ser lida é conhecida!     
     rxBuffer, nRx = com.getData(txLen)
 
-    f = open("foto_copiada.jpg", "wb")
+    f = open("foto_copiada.png", "wb")
     f.write(rxBuffer)
     f.close()
     
