@@ -10,9 +10,11 @@
 
 print("comecou")
 
-from enlace_recebe import *
+from enlace import *
 import time
 import binascii
+import tkinter as tk
+from tkinter import filedialog
 
 
 
@@ -23,7 +25,7 @@ import binascii
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
 
-serialName = "COM3"                  # Windows(variacao de)
+serialName = "COM6"                  # Windows(variacao de)
 print("abriu com")
 
 def main():
@@ -48,16 +50,27 @@ def main():
     #for x in range(1,10):
     #    ListTxBuffer.append(x)
     #txBuffer = bytes(ListTxBuffer)
+
+    root = tk.Tk()
+    root.withdraw()
     
+    filepath = filedialog.askopenfilename()
+
     #exemplo2
-    txBuffer = bytes([2]) + bytes([3])+ bytes("teste", 'utf-8')
-    
-    
-    txLen    = len(txBuffer)
-    print(txLen)
+    with open(str(filepath),"rb") as logo:
+        txBuffer = logo.read()
+    #txBuffer = bytes("Mas vai pra puta que o pariu",'utf-8')
+    print(txBuffer)
+
+    txLen = len(txBuffer)
+    txLen = (txLen).to_bytes(2, byteorder='big')
+
+    txBuffer = txLen + txBuffer
 
     # Transmite dado
-    print("tentado transmitir .... {} bytes".format(txLen))
+#    print("tentado transmitir .... {} bytes".format(txLen))
+
+    t = time.time()
     com.sendData(txBuffer)
 
     # espera o fim da transmissão
@@ -67,17 +80,26 @@ def main():
     
     # Atualiza dados da transmissão
     txSize = com.tx.getStatus()
-    print ("Transmitido       {} bytes ".format(txSize))
+#    print ("Transmitido       {} bytes ".format(txSize))
 
 
     # Faz a recepção dos dados
-    print ("Recebendo dados .... ")
+#    print ("Recebendo dados .... ")
     
     #repare que o tamanho da mensagem a ser lida é conhecida! 
-    rxBuffer, nRx = com.getData(int(binascii.unhexlify(txLen)))
+    rxBuffer, nRx = com.getData(2)
+    t1 = time.time() - t
+    lido = int.from_bytes(rxBuffer, 'big')
+    
+    print("tempo: " + str(t1))
+    print("Lida: "+ str(lido))
+    print("velocidade: " + str(lido/t1))
+
+    with open("byterate.txt", "a") as text:
+        text.write("path: {3}\ntempo total: {0} \ntamanho img: {1} \nbyterate: {2} \n --------------x---------------".format(t1, lido, lido/t1, filepath))
 
     # log
-    print ("Lido              {} bytes ".format(nRx))
+    print ("{} bytes ".format(nRx))
     
     print (rxBuffer)
 
@@ -91,4 +113,5 @@ def main():
 
     #so roda o main quando for executado do terminal ... se for chamado dentro de outro modulo nao roda
 if __name__ == "__main__":
-    main()
+    for e in range(10):
+        main()

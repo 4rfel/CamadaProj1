@@ -10,7 +10,7 @@
 
 print("comecou")
 
-from enlace_recebe import *
+from enlace import *
 import time
 import binascii
 
@@ -22,7 +22,7 @@ import binascii
 
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM5"                  # Windows(variacao de)
+serialName = "COM6"                  # Windows(variacao de)
 
 print("abriu com")
 
@@ -73,7 +73,7 @@ def main():
     print ("Recebendo dados .... ")
     
     #repare que o tamanho da mensagem a ser lida é conhecida! 
-    rxBuffer, nRx = com.getData(int(binascii.unhexlify(txLen)))
+    rxBuffer, nRx = com.getData(txLen)
 
     # log
     print ("Lido              {} bytes ".format(nRx))
