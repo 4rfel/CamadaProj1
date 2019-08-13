@@ -29,6 +29,17 @@ serialName = "COM6"                  # Windows(variacao de)
 print("abriu com")
 
 def main():
+
+    root = tk.Tk()
+    root.withdraw()
+    
+    filepath = filedialog.askopenfilename()
+
+    #exemplo2
+    with open(str(filepath),"rb") as logo:
+        txBuffer = logo.read()
+
+        
     # Inicializa enlace ... variavel com possui todos os metodos e propriedades do enlace, que funciona em threading
     com = enlace(serialName) # repare que o metodo construtor recebe um string (nome)
     # Ativa comunicacao
@@ -51,14 +62,7 @@ def main():
     #    ListTxBuffer.append(x)
     #txBuffer = bytes(ListTxBuffer)
 
-    root = tk.Tk()
-    root.withdraw()
-    
-    filepath = filedialog.askopenfilename()
 
-    #exemplo2
-    with open(str(filepath),"rb") as logo:
-        txBuffer = logo.read()
     #txBuffer = bytes("Mas vai pra puta que o pariu",'utf-8')
     print(txBuffer)
 
