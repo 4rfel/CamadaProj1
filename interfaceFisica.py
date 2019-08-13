@@ -20,7 +20,8 @@ class fisica(object):
     def __init__(self, name):
         self.name        = name
         self.port        = None
-        self.baudrate    = 115200 # aumentar mais rapido, porem mais incerto
+        self.baudrate    = 115200
+        #self.baudrate    = 9600
         self.bytesize    = serial.EIGHTBITS
         self.parity      = serial.PARITY_NONE
         self.stop        = serial.STOPBITS_ONE
@@ -87,6 +88,9 @@ class fisica(object):
         rxBufferValid = rxBufferConcat[0:nValid]
         self.rxRemain = rxBufferConcat[nValid:]
         try :
+            """ As vezes acontece erros na decodificacao
+            fora do ambiente linux, isso tenta corrigir
+            em parte esses erros. Melhorar futuramente."""
             rxBufferDecoded = self.decode(rxBufferValid)
             nRx = len(rxBuffer)
             return(rxBufferDecoded, nRx)
