@@ -185,4 +185,36 @@ byterate: 13985.726789056025   bytes/s
 tempo total: 1.6359784603118896 
 tamanho img: 21977 
 byterate: 13433.550950181956   bytes/s 
+ --------------x---------------path: C:/Users/furyo/Desktop/insper/Semestre 4/Camada Fisica da Computacao/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 1.621823787689209 
+tamanho img: 21977 
+byterate: 13550.793968383614   bytes/s 
+ --------------x---------------path: C:/Users/furyo/Desktop/insper/Semestre 4/Camada Fisica da Computacao/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 1.6357674598693848 
+tamanho img: 21977 
+byterate: 13435.283766896093   bytes/s 
+ --------------x---------------path: C:/Users/furyo/Desktop/insper/Semestre 4/Camada Fisica da Computacao/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 1.649393081665039 
+tamanho img: 21977 
+byterate: 13324.295005417707   bytes/s 
+ --------------x---------------path: C:/Users/furyo/Desktop/insper/Semestre 4/Camada Fisica da Computacao/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 1.60506010055542 
+tamanho img: 21977 
+byterate: 13692.322170612186   bytes/s 
+ --------------x---------------path: C:/Users/furyo/Desktop/insper/Semestre 4/Camada Fisica da Computacao/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 1.6790494918823242 
+tamanho img: 21977 
+byterate: 13088.953069133386   bytes/s 
+ --------------x---------------path: C:/Users/furyo/Desktop/insper/Semestre 4/Camada Fisica da Computacao/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.22140836715698242 
+tamanho img: 12 
+byterate: 54.19849373394181   bytes/s 
+ --------------x---------------path: C:/Users/furyo/Desktop/insper/Semestre 4/Camada Fisica da Computacao/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 1.8635351657867432 
+tamanho img: 21977 
+byterate: 11793.17697003147   bytes/s 
+ --------------x---------------path: C:/Users/furyo/Desktop/insper/Semestre 4/Camada Fisica da Computacao/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 1.5840554237365723 
+tamanho img: 21977 
+byterate: 13873.883243402704   bytes/s 
  --------------x---------------
