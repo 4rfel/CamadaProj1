@@ -62,8 +62,8 @@ def main():
     #txBuffer = bytes("Mas vai pra puta que o pariu",'utf-8')
     print(txBuffer)
 
-    txLen = len(txBuffer)
-    txLen = (txLen).to_bytes(2, byteorder='big')
+    txLen1 = len(txBuffer)
+    txLen = (txLen1).to_bytes(2, byteorder='big')
 
     txBuffer = txLen + txBuffer
 
@@ -93,10 +93,12 @@ def main():
     
     print("tempo: " + str(t1))
     print("Lida: "+ str(lido))
-    print("velocidade: " + str(lido/t1))
+    print("velocidade: " + str(lido/t1) + "bytes/seg")
+    print("Mandado : " + str(txLen))
+    print("Check: " + str(lido == txLen1))
 
     with open("byterate.txt", "a") as text:
-        text.write("path: {3}\ntempo total: {0} \ntamanho img: {1} \nbyterate: {2} \n --------------x---------------".format(t1, lido, lido/t1, filepath))
+        text.write("path: {3}\ntempo total: {0} \ntamanho img: {1} \nbyterate: {2}   bytes/s \n --------------x---------------".format(t1, lido, lido/t1, filepath))
 
     # log
     print ("{} bytes ".format(nRx))
@@ -113,5 +115,4 @@ def main():
 
     #so roda o main quando for executado do terminal ... se for chamado dentro de outro modulo nao roda
 if __name__ == "__main__":
-    for e in range(10):
-        main()
+    main()
