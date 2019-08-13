@@ -102,7 +102,7 @@ def main():
     print("Check: " + str(lido == txLen1))
 
     with open("byterate.txt", "a") as text:
-        text.write("path: {3}\ntempo total: {0} \ntamanho img: {1} \nbyterate: {2}   bytes/s \n --------------x---------------".format(t1, lido, lido/t1, filepath))
+        text.write("\npath: {3}\ntempo total: {0} \ntamanho img: {1} \nbyterate: {2}   bytes/s \n --------------x---------------".format(t1, lido, lido/t1, filepath))
 
     # log
     print ("{} bytes ".format(nRx))
