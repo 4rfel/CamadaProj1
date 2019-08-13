@@ -22,11 +22,8 @@ import binascii
 
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-<<<<<<< HEAD:aplicacao.py
-serialName = "COM11"                  # Windows(variacao de)
-=======
-serialName = "COM3"                  # Windows(variacao de)
->>>>>>> ff3d4e864c6edd8656ac6fc98132bb60966d255e:aplicacao_recebe.py
+serialName = "COM5"                  # Windows(variacao de)
+
 print("abriu com")
 
 def main():
@@ -45,8 +42,7 @@ def main():
     print ("gerando dados para transmissao :")
   
       #no exemplo estamos gerando uma lista de bytes ou dois bytes concatenados
-    
-<<<<<<< HEAD:aplicacao.py
+      
     #exemplo 1
     #ListTxBuffer =list()
     #for x in range(1,10):
@@ -73,14 +69,6 @@ def main():
     txSize = com.tx.getStatus()
     print ("Transmitido       {} bytes ".format(txSize))
 
-=======
-    # Atualiza dados da transmissão
-    #txSize = com.tx.getStatus()
-    #print ("Transmitido       {} bytes ".format(txSize))
-    txLen, nTx = com.getData(10)
-    print("TxLen = " + str(txLen))
-    print("nTx = " + str(nTx))
->>>>>>> ff3d4e864c6edd8656ac6fc98132bb60966d255e:aplicacao_recebe.py
     # Faz a recepção dos dados
     print ("Recebendo dados .... ")
     
