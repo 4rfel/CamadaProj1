@@ -10,8 +10,10 @@
 
 print("comecou")
 
-from enlace import *
+from enlace_recebe import *
 import time
+import binascii
+
 
 
 # Serial Com Port
@@ -20,7 +22,11 @@ import time
 
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
+<<<<<<< HEAD:aplicacao.py
 serialName = "COM11"                  # Windows(variacao de)
+=======
+serialName = "COM3"                  # Windows(variacao de)
+>>>>>>> ff3d4e864c6edd8656ac6fc98132bb60966d255e:aplicacao_recebe.py
 print("abriu com")
 
 def main():
@@ -28,8 +34,6 @@ def main():
     com = enlace(serialName) # repare que o metodo construtor recebe um string (nome)
     # Ativa comunicacao
     com.enable()
-
-   
 
     # Log
     print("-------------------------")
@@ -42,6 +46,7 @@ def main():
   
       #no exemplo estamos gerando uma lista de bytes ou dois bytes concatenados
     
+<<<<<<< HEAD:aplicacao.py
     #exemplo 1
     #ListTxBuffer =list()
     #for x in range(1,10):
@@ -68,11 +73,19 @@ def main():
     txSize = com.tx.getStatus()
     print ("Transmitido       {} bytes ".format(txSize))
 
+=======
+    # Atualiza dados da transmissão
+    #txSize = com.tx.getStatus()
+    #print ("Transmitido       {} bytes ".format(txSize))
+    txLen, nTx = com.getData(10)
+    print("TxLen = " + str(txLen))
+    print("nTx = " + str(nTx))
+>>>>>>> ff3d4e864c6edd8656ac6fc98132bb60966d255e:aplicacao_recebe.py
     # Faz a recepção dos dados
     print ("Recebendo dados .... ")
     
-    #repare que o tamanho da mensagem a ser lida é conhecida!     
-    rxBuffer, nRx = com.getData(txLen)
+    #repare que o tamanho da mensagem a ser lida é conhecida! 
+    rxBuffer, nRx = com.getData(int(binascii.unhexlify(txLen)))
 
     # log
     print ("Lido              {} bytes ".format(nRx))
