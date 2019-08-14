@@ -14,6 +14,8 @@ import time
 import threading
 
 # Class
+print("aaaaaa")
+
 class RX(object):
     """ This class implements methods to handle the reception
         data over the p2p fox protocol

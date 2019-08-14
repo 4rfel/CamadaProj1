@@ -99,7 +99,7 @@ class RX(object):
         """
 
         while(self.getBufferLen() < size):
-            time.sleep(0.001)
+            time.sleep(0.00001)
 #                 
         return(self.getBuffer(size))
 
