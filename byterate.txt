@@ -1,0 +1,127 @@
+
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 2.122283697128296 
+tamanho img: 21977 
+byterate: 10355.35448429327   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 13.485638618469238 
+tamanho img: 21977 
+byterate: 1629.6595676159843   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.8715956211090088 
+tamanho img: 21977 
+byterate: 25214.674635511252   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.8856978416442871 
+tamanho img: 21977 
+byterate: 24813.202614562062   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.909515380859375 
+tamanho img: 21977 
+byterate: 24163.41764251921   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.8643991947174072 
+tamanho img: 21977 
+byterate: 25424.595643202567   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.9432480335235596 
+tamanho img: 21977 
+byterate: 23299.27995492723   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.9528224468231201 
+tamanho img: 21977 
+byterate: 23065.157704119203   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.9422917366027832 
+tamanho img: 21977 
+byterate: 23322.92552965925   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.9466826915740967 
+tamanho img: 21977 
+byterate: 23214.747872339085   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.9350814819335938 
+tamanho img: 21977 
+byterate: 23502.76465164854   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.9521017074584961 
+tamanho img: 21977 
+byterate: 23082.617989063965   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/300px-Korean_K1_Tank.JPEG
+tempo total: 0.9066131114959717 
+tamanho img: 21977 
+byterate: 24240.77009402224   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/Cat03.jpg
+tempo total: 9.444211959838867 
+tamanho img: 279603 
+byterate: 29605.752305115613   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/Cat03.jpg
+tempo total: 9.448708295822144 
+tamanho img: 279603 
+byterate: 29591.6638810439   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/Cat03.jpg
+tempo total: 9.519706964492798 
+tamanho img: 279603 
+byterate: 29370.967094142798   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/aaaaaaaaaaaa.jpg
+tempo total: 12.068910598754883 
+tamanho img: 358586 
+byterate: 29711.546627662843   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/aaaaaaaaaaa.jpg
+tempo total: 8.897162675857544 
+tamanho img: 262382 
+byterate: 29490.525188661966   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/aaaaaaaaaaaa.jpg
+tempo total: 12.086897373199463 
+tamanho img: 358586 
+byterate: 29667.332229948475   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/aaaaaaaaaaaa.jpg
+tempo total: 12.129907608032227 
+tamanho img: 358586 
+byterate: 29562.137782694255   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/aaaaaaaaaaaa.jpg
+tempo total: 12.094897031784058 
+tamanho img: 358586 
+byterate: 29647.710026606714   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/aaaaaaaaaaaa.jpg
+tempo total: 6.812997579574585 
+tamanho img: 14264403 
+byterate: 2093704.3985990514   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/aaaaaaaaaaaa.jpg
+tempo total: 12.041455507278442 
+tamanho img: 358586 
+byterate: 29779.290367618196   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/AAAAfotoMuitoBoa.jpg
+tempo total: 12.049787759780884 
+tamanho img: 358586 
+byterate: 29758.698422628535   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/AAAAfotoMuitoBoa.jpg
+check: True
+tempo total: 12.040658235549927 
+tamanho img: 358586 
+byterate: 29781.262202200734   bytes/s 
+ --------------x---------------

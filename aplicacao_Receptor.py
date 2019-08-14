@@ -10,7 +10,6 @@
 
 
 from enlace import *
-import binascii
 
 # Serial Com Port
 #   para saber a sua porta, execute no terminal :
@@ -18,7 +17,7 @@ import binascii
 
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
-serialName = "COM4"                  # Windows(variacao de)
+serialName = "COM6"                  # Windows(variacao de)
 
 
 def main():

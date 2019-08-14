@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #####################################################
@@ -12,10 +11,8 @@ print("comecou")
 
 from enlace import *
 import time
-import binascii
 import tkinter as tk
 from tkinter import filedialog
-
 
 
 # Serial Com Port
@@ -25,7 +22,7 @@ from tkinter import filedialog
 #serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
 
-serialName = "COM6"                  # Windows(variacao de)
+serialName = "COM5"                  # Windows(variacao de)
 print("abriu com")
 
 def main():
@@ -64,10 +61,10 @@ def main():
 
 
     #txBuffer = bytes("Mas vai pra puta que o pariu",'utf-8')
-    print(txBuffer)
+    # print(txBuffer)
 
     txLen1 = len(txBuffer)
-    txLen = (txLen1).to_bytes(2, byteorder='big')
+    txLen = (txLen1).to_bytes(3, byteorder='big')
 
     txBuffer = txLen + txBuffer
 
@@ -91,7 +88,7 @@ def main():
 #    print ("Recebendo dados .... ")
     
     #repare que o tamanho da mensagem a ser lida é conhecida! 
-    rxBuffer, nRx = com.getData(2)
+    rxBuffer, nRx = com.getData(3)
     t1 = time.time() - t
     lido = int.from_bytes(rxBuffer, 'big')
     
@@ -102,12 +99,12 @@ def main():
     print("Check: " + str(lido == txLen1))
 
     with open("byterate.txt", "a") as text:
-        text.write("\npath: {3}\ntempo total: {0} \ntamanho img: {1} \nbyterate: {2}   bytes/s \n --------------x---------------".format(t1, lido, lido/t1, filepath))
+        text.write("\npath: {3}\ncheck: {4}\ntempo total: {0} \ntamanho img: {1} \nbyterate: {2}   bytes/s \n --------------x---------------".format(t1, lido, lido/t1, filepath, lido == txLen1))
 
     # log
     print ("{} bytes ".format(nRx))
     
-    print (rxBuffer)
+    # print (rxBuffer)
 
     
 
