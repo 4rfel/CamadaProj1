@@ -196,7 +196,7 @@ extension:
     - 0xff: sem extensão
 '''
 headSize = 12
-#      packageNumber  packageNumber    response       totalPackages   totalPackages    extension       ?? ?? ?? ?? ??
+#      packageNumber   packageNumber   response        totalPackages   totalPackages   extension       ?? ?? ?? ?? ??
 head = bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00])*5
 payLoad = bytes([0xff])*5 + bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4]) + bytes([0xff])*5  
 EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4])
