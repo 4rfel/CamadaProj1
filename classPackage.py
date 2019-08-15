@@ -33,7 +33,7 @@ class PackageMounter():
 
         # adding the payload size to the head
         payLoadSize = totalSize-16
-        self.head = self.head[:] + payLoadSize.to_bytes(4, "big")
+        self.head = self.head[:] + payLoadSize.to_bytes(1, "big")
 
         # create the package with head payload and EOP
         self.package = self.head + self.payLoad + self.EOP
@@ -52,13 +52,14 @@ class PackageDismounter():
     def __init__(self, package):
         self.package         = package
         self.packageSize     = len(package)
+        self.EOPPosition     = None
 
         self.head            = package[:headSize]
         self.packageNumber   = self.head[0] + self.head[1]
         self.message         = self.head[2] 
         self.totalOfPackages = self.head[3] + self.head[4]
         self.extension       = self.head[5]
-        self.payLoadSize     = self.head[8] + self.head[9] + self.head[10] + self.head[11]
+        self.payLoadSize     = self.head[11]
         self.payLoad_EOP     = self.package[headSize:]
 
         #=======================================================
@@ -86,6 +87,7 @@ class PackageDismounter():
                     #response 0x02, EOP wrong position
                     self.MSG0x02()
                 else:
+                    self.EOPPosition = index-3
                     #response 0x05, success
                     self.MSG0x05()
         #=============================================================
@@ -103,8 +105,8 @@ class PackageDismounter():
             if x01==0x00 and f1==0xf1 and x02==0x00 and f2==0xf2 and x03==0x00 and f3==0xf3 and x04==0x00 and f4==0xf4:
                 self.payLoad_EOP = self.payLoad_EOP[:index-8] + self.payLoad_EOP[index-7:]
                 self.payLoad_EOP = self.payLoad_EOP[:index-7] + self.payLoad_EOP[index-6:]
-                self.payLoad_EOP = self.payLoad_EOP[:index-6] + self.payLoad_EOP[index-5:] 
-                self.payLoad_EOP = self.payLoad_EOP[:index-5] + self.payLoad_EOP[index-4:] 
+                self.payLoad_EOP = self.payLoad_EOP[:index-6] + self.payLoad_EOP[index-5:]
+                self.payLoad_EOP = self.payLoad_EOP[:index-5] + self.payLoad_EOP[index-4:]
         #===============================================================
         # response 0x01, EOP not found
         if not self.foundEOP:
@@ -123,6 +125,7 @@ class PackageDismounter():
                 self.response = packageMounter.getPackage()
                 time.sleep(0.1)
         #==============================================================
+
             
     def MSG0x01(self):
         self.headResponse = self.packageNumber.to_bytes(2, "big") + bytes(0x01) + self.totalOfPackages.to_bytes(2, "big") + bytes([0x00])*3 + bytes([0x00])*3 + bytes([0x01])
@@ -161,12 +164,15 @@ class PackageDismounter():
     def getMessage(self):
         return self.message
     
-    def AAAAA(self):
+    def getOverHead(self):
         return self.packageSize/self.payLoadSize
+    
+    def getEOPPosition(self):
+        return self.EOPPosition
         
 
 '''
-packageNumber packageNumber response totalPackages totalPackages extension ?? ?? payLoadSize payLoadSize payLoadSize payLoadSize --The size is added automatic
+packageNumber packageNumber response totalPackages totalPackages extension ?? ?? ?? ?? ?? payLoadSize --The size is added automatic
 
 response:
     - 0x01: EOP not found
@@ -175,6 +181,7 @@ response:
     - 0x04: wrong packageNumber
     - 0x05: success 
     - 0x06: timeout
+    - 0xff: none
 
 extension:
     - 0x00: .txt
@@ -189,13 +196,13 @@ extension:
     - 0x09: .java
     - 0x0a: .dll
     - 0xff: sem extensão
-
 '''
 headSize = 12
-head = bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00])*5
+head = bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00])*5
 payLoad = bytes([0xff])*5 + bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4]) + bytes([0xff])*5  
 EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4])
 packageMounter = PackageMounter(head=head, payLoad=payLoad, EOP=EOP)
 package = packageMounter.getPackage()
 
-dismount = PackageDismounter(package=package)
+packageDismounter = PackageDismounter(package=package)
+print(packageDismounter.getEOPPosition())
