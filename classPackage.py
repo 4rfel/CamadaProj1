@@ -63,17 +63,17 @@ class PackageDismounter():
         self.payLoad_EOP     = self.package[headSize:]
 
         #=======================================================
-        index = 7
+        index         = 7
         self.foundEOP = False
-        self.timeOut = False
-        startTime = time.time()
+        self.timeOut  = False
+        startTime     = time.time()
         while index < len(self.payLoad_EOP):
         # test if we have a timeout
             deltaTime = time.time() - startTime
             if deltaTime >= 5:
                 self.foundEOP = True
                 self.MSG0x06()
-                self.timeOut = True
+                self.timeOut  = True
                 break
         #=======================================================
         # searching for the EOP
