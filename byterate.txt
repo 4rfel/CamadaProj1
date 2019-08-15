@@ -125,3 +125,57 @@ tempo total: 12.040658235549927
 tamanho img: 358586 
 byterate: 29781.262202200734   bytes/s 
  --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/logo.PNG
+check: True
+tempo total: 0.29102134704589844 
+tamanho img: 3312 
+byterate: 11380.608445461039   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/AAAAfotoMuitoBoa.jpg
+check: True
+tempo total: 12.036152601242065 
+tamanho img: 358586 
+byterate: 29792.41057171341   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/AAAAfotoMuitoBoa.jpg
+check: True
+tempo total: 12.052268266677856 
+tamanho img: 358586 
+byterate: 29752.573711906127   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/AAAAfotoMuitoBoa.jpg
+check: True
+tempo total: 12.024252653121948 
+tamanho img: 358586 
+byterate: 29821.894993773072   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/AAAAfotoMuitoBoa.jpg
+check: True
+tempo total: 11.978283643722534 
+tamanho img: 358586 
+byterate: 29936.342356354566   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/AAAAfotoMuitoBoa.jpg
+check: True
+tempo total: 11.965909242630005 
+tamanho img: 358586 
+byterate: 29967.30066466607   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/AAAAfotoMuitoBoa.jpg
+check: True
+tempo total: 11.9512038230896 
+tamanho img: 358586 
+byterate: 30004.174082213845   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/AAAAfotoMuitoBoa.jpg
+check: True
+tempo total: 11.958414077758789 
+tamanho img: 358586 
+byterate: 29986.083243841407   bytes/s 
+ --------------x---------------
+path: C:/Users/arfom/Desktop/insper/4 semestre/Camada Fisica/CamadaProj1/AAAAfotoMuitoBoa.jpg
+check: True
+tempo total: 12.027551174163818 
+tamanho img: 358586 
+byterate: 29813.71642552414   bytes/s 
+ --------------x---------------

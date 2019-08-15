@@ -30,13 +30,13 @@ def main():
     
     txSize = com.tx.getStatus()
 
-    txLen, nRxLen = com.getData(2)
+    txLen, nRxLen = com.getData(3)
     txLen = int.from_bytes(txLen, 'big')
 
 
     rxBuffer, nRx = com.getData(txLen) 
     
-    com.sendData(nRx.to_bytes(2, "big"))
+    com.sendData(nRx.to_bytes(3, "big"))
 
 
     with open("received_image" + str(testNumber) + ".png", "wb") as image:
