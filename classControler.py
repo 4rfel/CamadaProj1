@@ -6,6 +6,8 @@ import serial
 from time import sleep, time
 
 serialName = "COM3"
+com = enlace(serialName)
+com.enable()
 
 class ControlerClient():
     def __init__(self, filepath):
@@ -16,13 +18,12 @@ class ControlerClient():
         self.actualPackage = 1
         self.leftover = None
         self.extension = None
-        self.EOP = bytes([0xf1])   + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
+        self.EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
 
         self.messageRead = None
 
-        self.com = enlace(serialName)
-        self.com.enable()
-
+        # self.com = enlace(serialName)
+        # self.com.enable()
 
         self.sendPackage()
 
@@ -35,15 +36,23 @@ class ControlerClient():
         head = self.actualPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00]) 
         packageMounter = PackageMounter(head=head, payLoad=payload, EOP=self.EOP)
         package = packageMounter.getPackage()
-        self.com.sendData(package)
+        # self.com.sendData(package)
+        com.sendData(package)
+        # print("payload", payload)
+        # print("package sent",package)
+        # print(self.actualPackage)
 
     def readPackage(self):
-        head = self.com.getData(16)
+        # head = self.com.getData(12)
+        head, headSize = com.getData(12)
+
         headDismounter = HeadDismounter(head)
-        self.packageNumberSent = headDismounter.getPackageNumber
+        self.packageNumberSent = headDismounter.getPackageNumber()
         head = headDismounter.getHead()
         payLoadSize = head.getPayLoadSize()
-        package = self.com.getData(payLoadSize)
+        # package = self.com.getData(payLoadSize)
+        package, packageSize = com.getData(payLoadSize+4)
+
         packageRead = PackageDismounter(package, head)
         self.messageRead = packageRead.getMessage()
         self.messageInterpreter()
@@ -69,40 +78,51 @@ class ControlerServer():
         self.extension = None
         self.messageRead = None
 
-        self.com = enlace(serialName)
-        self.com.enable()
-
-        self.sendPackage()
+        # self.com = enlace(serialName)
+        # self.com.enable()
         
         self.response = None
         self.timeout = False
 
         self.fullFile = None
 
+        self.readPackage()
+
     def sendPackage(self):
-        self.com.sendData(self.response)
+        # self.com.sendData(self.response)
+        com.sendData(self.response)
+
         if self.timeout:
             self.sendPackage()
             sleep(0.1)
 
     def readPackage(self):
-        head = self.com.getData(16)
+        # head = self.com.getData(12)
+        head, headSize = com.getData(12)
+        # print("head read", head)
         headDismounter = HeadDismounter(head)
-        self.packageNumberSent = headDismounter.getPackageNumber
-        head = headDismounter.getHead()
-        payLoadSize = head.getPayLoadSize()
-        package = self.com.getData(payLoadSize)
+        self.packageNumberSent = headDismounter.getPackageNumber()
+        payLoadSize = headDismounter.getPayLoadSize()
+        # package = self.com.getData(payLoadSize)
+        package, packageSize = com.getData(payLoadSize+4)
         packageRead = PackageDismounter(package, head)
+        # print("package read", package)
         payLoad = packageRead.getPayLoad()
+        # print("payLoad read", payLoad)
+        self.response = packageRead.getResponse()
         if self.fullFile != None:
             self.fullFile += payLoad
         else:
             self.fullFile = payLoad
+        self.sendPackage()
+        
         
     def saveFile(self, filename):
-        with open(filename + ".jpg", "wb") as file:
-            file.write(self.fullFile)
-
+        if self.fullFile != None:
+            with open(filename + ".jpeg", "wb") as file:
+                file.write(self.fullFile)
+        else:
+            pass
 '''
 response:
 	- 0x01: EOP not found
@@ -135,5 +155,10 @@ filepath = filedialog.askopenfilename()
 
 controlerClient = ControlerClient(filepath=filepath)
 
-# controlerServer = ControlerServer()
-# controlerServer.saveFile()
+controlerServer = ControlerServer()
+controlerServer.saveFile("test")
+
+print("-------------------------")
+print("Comunicação encerrada")
+print("-------------------------")
+com.disable()
