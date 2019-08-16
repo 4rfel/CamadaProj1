@@ -69,7 +69,7 @@ class HeadDismounter():
 		return self.head
 
 	def getPayloadSize(self):
-		return self.PayLoadSize
+		return self.payLoadSize
 	
 
 class PackageDismounter():
