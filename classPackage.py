@@ -75,7 +75,10 @@ class PackageDismounter():
 				self.MSG0x06()
 				self.timeOut  = True
 				break
+<<<<<<< Updated upstream
 		#=======================================================
+=======
+>>>>>>> Stashed changes
 		# searching for the EOP
 			f1 = self.payLoad_EOP[index-3]
 			f2 = self.payLoad_EOP[index-2]
@@ -91,6 +94,7 @@ class PackageDismounter():
 					self.EOPPosition = index-3
 					#response 0x05, success
 					self.MSG0x05()
+<<<<<<< Updated upstream
 		#=============================================================
 		# de-stuffing the payload
 			x04 = self.payLoad_EOP[index-7]
@@ -108,6 +112,38 @@ class PackageDismounter():
 				self.payLoad_EOP = self.payLoad_EOP[:index-7] + self.payLoad_EOP[index-6:]
 				self.payLoad_EOP = self.payLoad_EOP[:index-6] + self.payLoad_EOP[index-5:]
 				self.payLoad_EOP = self.payLoad_EOP[:index-5] + self.payLoad_EOP[index-4:]
+=======
+			index += 1
+			
+
+		index = 7
+		if not self.timeOut:
+			while index < len(self.payLoad_EOP):
+			# test if we have a timeout
+				deltaTime = time.time() - startTime
+				if deltaTime >= 5:
+					self.foundEOP = True
+					self.MSG0x06()
+					self.timeOut  = True
+					break
+			#=============================================================
+			# de-stuffing the payload
+				x04 = self.payLoad_EOP[index-7]
+				f1  = self.payLoad_EOP[index-6]
+				x01 = self.payLoad_EOP[index-5]
+				f2  = self.payLoad_EOP[index-4]
+				x02 = self.payLoad_EOP[index-3]
+				f3  = self.payLoad_EOP[index-2]
+				x03 = self.payLoad_EOP[index-1]
+				f4  = self.payLoad_EOP[index  ]
+				index += 1
+
+				if x01==0x00 and f1==0xf1 and x02==0x00 and f2==0xf2 and x03==0x00 and f3==0xf3 and x04==0x00 and f4==0xf4:
+					self.payLoad_EOP = self.payLoad_EOP[:index-8] + self.payLoad_EOP[index-7:]
+					self.payLoad_EOP = self.payLoad_EOP[:index-7] + self.payLoad_EOP[index-6:]
+					self.payLoad_EOP = self.payLoad_EOP[:index-6] + self.payLoad_EOP[index-5:]
+					self.payLoad_EOP = self.payLoad_EOP[:index-5] + self.payLoad_EOP[index-4:]
+>>>>>>> Stashed changes
 		#===============================================================
 		# response 0x01, EOP not found
 		if not self.foundEOP:
@@ -128,8 +164,12 @@ class PackageDismounter():
 		#==============================================================
 
 
+<<<<<<< Updated upstream
 #                                 packageNumber                    response       totalPackages                           extension         ??
 
+=======
+#                            packageNumber                          response        totalPackages                              extension       ??
+>>>>>>> Stashed changes
 	def MSG0x01(self):
 		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x01]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00])
 		print("0x01 - EOP not found")
