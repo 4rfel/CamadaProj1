@@ -32,8 +32,8 @@ class PackageMounter():
             self.leftovers = self.payLoad[self.maxSize:]
 
         # adding the payload size to the head
-        payLoadSize = totalSize-16
-        self.head = self.head[:] + payLoadSize.to_bytes(1, "big")
+        payLoadSize = len(self.payLoad)
+        self.head = self.head + payLoadSize.to_bytes(1, "big")
 
         # create the package with head payload and EOP
         self.package = self.head + self.payLoad + self.EOP
@@ -84,8 +84,10 @@ class PackageDismounter():
 
             if f1==0xf1 and f2==0xf2 and f3==0xf3 and f4==0xf4:
                 if index+1 != self.payLoadSize:
+                    print(index+1, self.payLoadSize)
                     #response 0x02, EOP wrong position
                     self.MSG0x02()
+                    self.foundEOP = True
                 else:
                     self.EOPPosition = index-3
                     #response 0x05, success
@@ -201,7 +203,7 @@ extension:
 headSize = 12
 #      packageNumber   packageNumber   packageNumber   packageNumber   response        totalPackages   totalPackages   totalPackages   totalPackages   extension       ??
 head = bytes([0x00]) + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00]) + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00])
-payLoad = bytes([0xff])*5 + bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4]) + bytes([0xff])*5  
+payLoad = bytes([0xff])*5 + bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4]) + bytes([0xff])*200    
 EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4])
 packageMounter = PackageMounter(head=head, payLoad=payLoad, EOP=EOP)
 package = packageMounter.getPackage()
