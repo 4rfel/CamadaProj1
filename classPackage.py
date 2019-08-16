@@ -13,10 +13,10 @@ class PackageMounter():
 		# stuff the payload
 		index = 3
 		while index < len(self.payLoad)-3:
-			f1 = self.payLoad[index-3]
-			f2 = self.payLoad[index-2]
-			f3 = self.payLoad[index-1]
-			f4 = self.payLoad[index  ]
+			f1     = self.payLoad[index-3]
+			f2     = self.payLoad[index-2]
+			f3     = self.payLoad[index-1]
+			f4     = self.payLoad[index  ]
 			index += 1
 
 			if f1==0xf1 and f2==0xf2 and f3==0xf3 and f4==0xf4:
@@ -28,7 +28,7 @@ class PackageMounter():
 		# make the size of the payload 128
 		totalSize = 16+len(self.payLoad)
 		if totalSize > self.maxSize:
-			self.payLoad = self.payLoad[:self.maxSize]
+			self.payLoad   = self.payLoad[:self.maxSize]
 			self.leftovers = self.payLoad[self.maxSize:]
 
 		# adding the payload size to the head
@@ -84,7 +84,6 @@ class PackageDismounter():
 
 			if f1==0xf1 and f2==0xf2 and f3==0xf3 and f4==0xf4:
 				if index+1 != self.payLoadSize:
-					print(index+1, self.payLoadSize)
 					#response 0x02, EOP wrong position
 					self.MSG0x02()
 					self.foundEOP = True
@@ -116,8 +115,8 @@ class PackageDismounter():
 		#==============================================================
 		# mount the response package
 		payLoadResponse = bytes([0x00])
-		EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4])
-		packageMounter = PackageMounter(head=self.headResponse, payLoad=payLoadResponse, EOP=EOP) 
+		EOP 			= bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4])
+		packageMounter  = PackageMounter(head=self.headResponse, payLoad=payLoadResponse, EOP=EOP) 
 		#==============================================================
 		# send the package
 		if not self.timeOut:
@@ -207,13 +206,13 @@ extension:
 	- 0xff: sem extensão
 '''
 headSize = 12
-#      packageNumber   packageNumber   packageNumber   packageNumber   response        totalPackages   totalPackages   totalPackages   totalPackages   extension       ??
-head = bytes([0x00]) + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00]) + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00])
-payLoad = bytes([0xff])*5 + bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4]) + bytes([0xff])*200    
-EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4])
-packageMounter = PackageMounter(head=head, payLoad=payLoad, EOP=EOP)
-package = packageMounter.getPackage()
+#                   packageNumber   packageNumber   packageNumber    packageNumber    response        totalPackages   totalPackages   totalPackages   totalPackages   extension       ??
+head     	      = bytes([0x00])   + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00]) + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00])
+payLoad  	      = bytes([0xff])*5 + bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4]) + bytes([0xff])*200    
+EOP      	      = bytes([0xf1])   + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
+packageMounter    = PackageMounter(head=head, payLoad=payLoad, EOP=EOP)
+package           = packageMounter.getPackage()
 
 packageDismounter = PackageDismounter(package=package)
-response = packageDismounter.getResponse()
+response 		  = packageDismounter.getResponse()
 print(response)
