@@ -6,6 +6,7 @@ import serial
 from time import sleep, time
 
 serialName = "COM3"
+print(serial.tools.list_ports)
 com = enlace(serialName)
 com.enable()
 
@@ -17,10 +18,15 @@ class ControlerClient():
         self.totalOfPackages = ceil(self.fileSize/128)
         self.actualPackage = 1
         self.leftover = None
-        self.extension = None
         self.EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
 
+        self.extension_types = {'txt':0x00,'py':0x01,'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
+        self._resp_ = {0x01:"EoP not found",0x02:"EoP wrong position",0x03:"payLoadSize != realPayloadSize",0x04:"Wrong package number",0x05:"Success",0x06:"Timeout",0xff:None}
+
         self.messageRead = None
+
+        self.extension = filepath.split(".")[1]
+        self.extensionByte = bytes([self.extension_types[self.extension]])
 
         # self.com = enlace(serialName)
         # self.com.enable()
@@ -32,8 +38,8 @@ class ControlerClient():
             payload = self.leftover + self.file[(self.actualPackage-1)*112:self.actualPackage*112]
         else:
             payload = self.file[(self.actualPackage-1)*112:self.actualPackage*112]
-#              packageNumber                           response        totalPackages                             extension       ??
-        head = self.actualPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00]) 
+#              packageNumber                           response        totalPackages                             extension            ??
+        head = self.actualPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + self.extensionByte + bytes([0x00]) 
         packageMounter = PackageMounter(head=head, payLoad=payload, EOP=self.EOP)
         package = packageMounter.getPackage()
         # self.com.sendData(package)
@@ -48,7 +54,6 @@ class ControlerClient():
 
         headDismounter = HeadDismounter(head)
         self.packageNumberSent = headDismounter.getPackageNumber()
-        head = headDismounter.getHead()
         payLoadSize = head.getPayLoadSize()
         # package = self.com.getData(payLoadSize)
         package, packageSize = com.getData(payLoadSize+4)
@@ -80,6 +85,8 @@ class ControlerServer():
 
         # self.com = enlace(serialName)
         # self.com.enable()
+        self.extension_types = {'txt':0x00,'py':0x01,'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
+        self._resp_ = {0x01:"EoP not found",0x02:"EoP wrong position",0x03:"payLoadSize != realPayloadSize",0x04:"Wrong package number",0x05:"Success",0x06:"Timeout",0xff:None}
         
         self.response = None
         self.timeout = False
@@ -91,7 +98,6 @@ class ControlerServer():
     def sendPackage(self):
         # self.com.sendData(self.response)
         com.sendData(self.response)
-
         if self.timeout:
             self.sendPackage()
             sleep(0.1)
@@ -101,6 +107,7 @@ class ControlerServer():
         head, headSize = com.getData(12)
         # print("head read", head)
         headDismounter = HeadDismounter(head)
+        self.extension = self._resp_[headDismounter.getExtension()]
         self.packageNumberSent = headDismounter.getPackageNumber()
         payLoadSize = headDismounter.getPayLoadSize()
         # package = self.com.getData(payLoadSize)
@@ -119,7 +126,7 @@ class ControlerServer():
         
     def saveFile(self, filename):
         if self.fullFile != None:
-            with open(filename + ".jpeg", "wb") as file:
+            with open(filename + "." + self.extension, "wb") as file:
                 file.write(self.fullFile)
         else:
             pass
@@ -156,7 +163,8 @@ filepath = filedialog.askopenfilename()
 controlerClient = ControlerClient(filepath=filepath)
 
 controlerServer = ControlerServer()
-controlerServer.saveFile("test")
+newfilename = input("Nome para o novo arquivo")
+controlerServer.saveFile(newfilename)
 
 print("-------------------------")
 print("Comunicação encerrada")
