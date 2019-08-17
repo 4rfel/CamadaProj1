@@ -49,12 +49,12 @@ class PackageMounter():
 class PackageDismounter():
 	"""
 	"""
-	def __init__(self, package):
+	def __init__(self, package, head):
 		self.package         = package
 		self.packageSize     = len(package)
 		self.EOPPosition     = None
 
-		self.head            = package[:headSize]
+		self.head            = head
 		self.packageNumber   = self.head[0] + self.head[1] + self.head[2] + self.head[3]
 		self.message         = self.head[4] 
 		self.totalOfPackages = self.head[5] + self.head[6] + self.head[7] + self.head[8]
@@ -75,13 +75,6 @@ class PackageDismounter():
 				self.MSG0x06()
 				self.timeOut  = True
 				break
-<<<<<<< Updated upstream
-		#=======================================================
-=======
->>>>>>> Stashed changes
-		# searching for the EOP
-			f1 = self.payLoad_EOP[index-3]
-			f2 = self.payLoad_EOP[index-2]
 			f3 = self.payLoad_EOP[index-1]
 			f4 = self.payLoad_EOP[index  ]
 
@@ -94,7 +87,6 @@ class PackageDismounter():
 					self.EOPPosition = index-3
 					#response 0x05, success
 					self.MSG0x05()
-<<<<<<< Updated upstream
 		#=============================================================
 		# de-stuffing the payload
 			x04 = self.payLoad_EOP[index-7]
@@ -112,7 +104,6 @@ class PackageDismounter():
 				self.payLoad_EOP = self.payLoad_EOP[:index-7] + self.payLoad_EOP[index-6:]
 				self.payLoad_EOP = self.payLoad_EOP[:index-6] + self.payLoad_EOP[index-5:]
 				self.payLoad_EOP = self.payLoad_EOP[:index-5] + self.payLoad_EOP[index-4:]
-=======
 			index += 1
 			
 
@@ -143,7 +134,6 @@ class PackageDismounter():
 					self.payLoad_EOP = self.payLoad_EOP[:index-7] + self.payLoad_EOP[index-6:]
 					self.payLoad_EOP = self.payLoad_EOP[:index-6] + self.payLoad_EOP[index-5:]
 					self.payLoad_EOP = self.payLoad_EOP[:index-5] + self.payLoad_EOP[index-4:]
->>>>>>> Stashed changes
 		#===============================================================
 		# response 0x01, EOP not found
 		if not self.foundEOP:
@@ -164,12 +154,9 @@ class PackageDismounter():
 		#==============================================================
 
 
-<<<<<<< Updated upstream
 #                                 packageNumber                    response       totalPackages                           extension         ??
 
-=======
 #                            packageNumber                          response        totalPackages                              extension       ??
->>>>>>> Stashed changes
 	def MSG0x01(self):
 		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x01]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00])
 		print("0x01 - EOP not found")
@@ -247,12 +234,12 @@ extension:
 '''
 headSize = 12
 #                   packageNumber   packageNumber   packageNumber    packageNumber    response        totalPackages   totalPackages   totalPackages   totalPackages   extension       ??
-head     	      = bytes([0x00])   + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00]) + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00])
-payLoad  	      = bytes([0xff])*5 + bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4]) + bytes([0xff])*200    
-EOP      	      = bytes([0xf1])   + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
-packageMounter    = PackageMounter(head=head, payLoad=payLoad, EOP=EOP)
-package           = packageMounter.getPackage()
+# head     	      = bytes([0x00])   + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00]) + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00])
+# payLoad  	      = bytes([0xff])*5 + bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4]) + bytes([0xff])*200    
+# EOP      	      = bytes([0xf1])   + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
+# packageMounter    = PackageMounter(head=head, payLoad=payLoad, EOP=EOP)
+# package           = packageMounter.getPackage()
 
-packageDismounter = PackageDismounter(package=package)
-response 		  = packageDismounter.getResponse()
-print(response)
+# packageDismounter = PackageDismounter(package=package,head)
+# response 		  = packageDismounter.getResponse()
+# print(response)
