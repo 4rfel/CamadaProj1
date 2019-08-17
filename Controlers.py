@@ -4,12 +4,15 @@ from Classes import HeadDismounter
 from enlace import enlace
 from tkinter import Tk, filedialog
 from time import time
+
 class Master():
     '''
     Classe geral, que facilita a criação do server e Client, pois os dois compartilham de alguns padrões do protocolo, como os erros, tipos de extensão e a funação que monta o HEAD
     '''
-    def __init__(self,serialport):
-        self.comm = enlace(serialport)
+    # def __init__(self,serialport):
+    def __init__(self,serialport, comm):
+        # self.comm = enlace(serialport)
+        self.comm = comm
         self.head = None
         self.eop = bytes([0xF1]) + bytes([0xF2]) + bytes([0xF3]) + bytes([0xF4])
         self.payload = None
@@ -38,8 +41,10 @@ class Client(Master):
     '''
     Classe que irá mandar um arquivo, mas também deve receber a agir de acordo com a resposta
     '''
-    def __init__(self, filepath,serialport):
-        super().__init__(serialport)
+    # def __init__(self, filepath, serialport):
+    def __init__(self, filepath, serialport, comm):
+        # super().__init__(serialport)
+        super().__init__(serialport, comm)
         self.extension = str(filepath)[0].split('.')[-1]
         with open(filepath, "rb") as arquivo:
             self.arquivo = arquivo.read()
@@ -90,8 +95,10 @@ class Client(Master):
 
 
 class Server(Master):
-    def __init__(self,serialport):
-        super().__init__(serialport)
+    # def __init__(self,serialport):
+    def __init__(self,serialport, comm):
+        # super().__init__(serialport)
+        super().__init__(serialport, comm)
         self.mensagem = None
         self.packageNumber = 1
     
