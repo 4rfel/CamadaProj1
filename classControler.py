@@ -1,14 +1,47 @@
 from classPackage import PackageMounter, PackageDismounter, HeadDismounter
-from tkinter import filedialog, Tk
 from math import ceil
 from enlace import enlace
-import serial
+import subprocess
 from time import sleep, time
+from progressBar import progressBar
 
-serialName = "COM3"
-print(serial.tools.list_ports)
+from tkinter import filedialog, Tk
+
+
+def install(name):
+    subprocess.call(['pip', 'install', name])
+
+    
+try:
+    import curses
+except ImportError:
+    install("windows-curses")
+finally:
+    import curses
+ 
+try:
+    import esptool
+except ImportError:
+    install("esptool")
+finally:
+    import esptool
+
+try:
+    import serial
+except ImportError:
+    install("pyserial")
+finally:
+    import serial
+
+
+serialName = serial.tools.list_ports.comports()[0][0]
+
 com = enlace(serialName)
 com.enable()
+
+# stdscr = curses.initscr()
+# curses.noecho()
+# curses.cbreak()
 
 class ControlerClient():
     def __init__(self, filepath):
@@ -22,10 +55,10 @@ class ControlerClient():
 
         self.extension_types = {'txt':0x00,'py':0x01,'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
         self._resp_ = {0x01:"EoP not found",0x02:"EoP wrong position",0x03:"payLoadSize != realPayloadSize",0x04:"Wrong package number",0x05:"Success",0x06:"Timeout",0xff:None}
-
+        self.extension_types_reverse = {0x00:"txt",0x01:"py",'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
         self.messageRead = None
 
-        self.extension = filepath.split(".")[1]
+        self.extension = filepath.split(".")[1].lower()
         self.extensionByte = bytes([self.extension_types[self.extension]])
 
         # self.com = enlace(serialName)
@@ -44,18 +77,15 @@ class ControlerClient():
         package = packageMounter.getPackage()
         # self.com.sendData(package)
         com.sendData(package)
-        # print("payload", payload)
-        # print("package sent",package)
-        # print(self.actualPackage)
 
     def readPackage(self):
-        # head = self.com.getData(12)
+        print("client read")
+
         head, headSize = com.getData(12)
 
         headDismounter = HeadDismounter(head)
         self.packageNumberSent = headDismounter.getPackageNumber()
         payLoadSize = head.getPayLoadSize()
-        # package = self.com.getData(payLoadSize)
         package, packageSize = com.getData(payLoadSize+4)
 
         packageRead = PackageDismounter(package, head)
@@ -78,6 +108,26 @@ class ControlerClient():
         elif self.messageRead==0x06:
             self.sendPackage()
 
+    def printProgressBar (self, iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+        """
+        Call in a loop to create terminal progress bar
+        @params:
+            iteration   - Required  : current iteration (Int)
+            total       - Required  : total iterations (Int)
+            prefix      - Optional  : prefix string (Str)
+            suffix      - Optional  : suffix string (Str)
+            decimals    - Optional  : positive number of decimals in percent complete (Int)
+            length      - Optional  : character length of bar (Int)
+            fill        - Optional  : bar fill character (Str)
+        """
+        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+        filledLength = int(length * iteration // total)
+        bar = fill * filledLength + '-' * (length - filledLength)
+        print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
+        # Print New Line on Complete
+        if iteration == total: 
+            print()
+
 class ControlerServer():
     def __init__(self):
         self.extension = None
@@ -87,6 +137,7 @@ class ControlerServer():
         # self.com.enable()
         self.extension_types = {'txt':0x00,'py':0x01,'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
         self._resp_ = {0x01:"EoP not found",0x02:"EoP wrong position",0x03:"payLoadSize != realPayloadSize",0x04:"Wrong package number",0x05:"Success",0x06:"Timeout",0xff:None}
+        self.extension_types_reverse = {0x00:"txt",0x01:"py",0x02:'png',0x03:'jpg',0x04:'jpeg',0x05:'pdf',0x06:'gif',0x07:'docx',0x08:'js',0x09:'java',0x0a:'dll'}
         
         self.response = None
         self.timeout = False
@@ -97,25 +148,26 @@ class ControlerServer():
 
     def sendPackage(self):
         # self.com.sendData(self.response)
+        print("Server sent response")
+        print(f"Server response {self.response}")
+        print("")
         com.sendData(self.response)
         if self.timeout:
             self.sendPackage()
             sleep(0.1)
 
     def readPackage(self):
-        # head = self.com.getData(12)
         head, headSize = com.getData(12)
-        # print("head read", head)
         headDismounter = HeadDismounter(head)
-        self.extension = self._resp_[headDismounter.getExtension()]
+        self.extension = self.extension_types_reverse[headDismounter.getExtension()]
         self.packageNumberSent = headDismounter.getPackageNumber()
         payLoadSize = headDismounter.getPayLoadSize()
-        # package = self.com.getData(payLoadSize)
         package, packageSize = com.getData(payLoadSize+4)
         packageRead = PackageDismounter(package, head)
-        # print("package read", package)
         payLoad = packageRead.getPayLoad()
-        # print("payLoad read", payLoad)
+        packageNumber = packageRead.getPackageNumber()
+        totalOfPackages = packageRead.getTotalOfPackages()
+        self.printProgressBar(packageNumber, totalOfPackages)
         self.response = packageRead.getResponse()
         if self.fullFile != None:
             self.fullFile += payLoad
@@ -130,6 +182,27 @@ class ControlerServer():
                 file.write(self.fullFile)
         else:
             pass
+    
+    def printProgressBar (self, iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+        """
+        Call in a loop to create terminal progress bar
+        @params:
+            iteration   - Required  : current iteration (Int)
+            total       - Required  : total iterations (Int)
+            prefix      - Optional  : prefix string (Str)
+            suffix      - Optional  : suffix string (Str)
+            decimals    - Optional  : positive number of decimals in percent complete (Int)
+            length      - Optional  : character length of bar (Int)
+            fill        - Optional  : bar fill character (Str)
+        """
+        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+        filledLength = int(length * iteration // total)
+        bar = fill * filledLength + '-' * (length - filledLength)
+        print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
+        # Print New Line on Complete
+        if iteration == total: 
+            print()
+
 '''
 response:
 	- 0x01: EOP not found
@@ -163,10 +236,13 @@ filepath = filedialog.askopenfilename()
 controlerClient = ControlerClient(filepath=filepath)
 
 controlerServer = ControlerServer()
-newfilename = input("Nome para o novo arquivo")
-controlerServer.saveFile(newfilename)
 
+com.disable()
 print("-------------------------")
 print("Comunicação encerrada")
 print("-------------------------")
-com.disable()
+print("")
+
+newfilename = input("Nome para o novo arquivo: ")
+controlerServer.saveFile(newfilename)
+

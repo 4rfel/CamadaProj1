@@ -99,8 +99,38 @@ class PackageDismounter():
 		self.timeOut  = False
 		startTime     = time.time()
 		#=======================================================
+		# while index < len(self.payLoad_EOP):
+		# # searching for the EOP
+		# 	f1 = self.payLoad_EOP[index-3]
+		# 	f2 = self.payLoad_EOP[index-2]
+		# 	f3 = self.payLoad_EOP[index-1]
+		# 	f4 = self.payLoad_EOP[index  ]
+		# 			# print(index, self.payLoadSize)
+		# 	if f1==0xf1 and f2==0xf2 and f3==0xf3 and f4==0xf4:
+		# 		if index-3 != self.payLoadSize:
+		# 			# print(index-3, self.payLoadSize)
+		# 			#response 0x02, EOP wrong position
+		# 			self.MSG0x02()
+		# 			self.foundEOP = True
+		# 		else:
+					
+		# 			self.EOPPosition = index-3
+		# 			#response 0x05, success
+		# 			self.MSG0x05()
+		# 	index += 1
+			
+
+
+		index         = 7
 		while index < len(self.payLoad_EOP):
-		# searching for the EOP
+		# test if we have a timeout
+			deltaTime = time.time() - startTime
+			if deltaTime >= 5:
+				self.foundEOP = True
+				self.MSG0x06()
+				self.timeOut  = True
+				break
+
 			f1 = self.payLoad_EOP[index-3]
 			f2 = self.payLoad_EOP[index-2]
 			f3 = self.payLoad_EOP[index-1]
@@ -117,19 +147,6 @@ class PackageDismounter():
 					self.EOPPosition = index-3
 					#response 0x05, success
 					self.MSG0x05()
-			index += 1
-			
-
-
-		index         = 7
-		while index < len(self.payLoad_EOP):
-		# test if we have a timeout
-			deltaTime = time.time() - startTime
-			if deltaTime >= 5:
-				self.foundEOP = True
-				self.MSG0x06()
-				self.timeOut  = True
-				break
 		#=============================================================
 		# de-stuffing the payload
 			x04 = self.payLoad_EOP[index-7]
@@ -209,6 +226,12 @@ class PackageDismounter():
 	
 	def getPayLoad(self):
 		return self.payLoad
+
+	def getPackageNumber(self):
+		return self.packageNumber
+	
+	def getTotalOfPackages(self):
+		return self.totalOfPackages
 		
 
 '''
