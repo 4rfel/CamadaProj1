@@ -7,7 +7,7 @@ class PackageMounter():
 		self.head      = head
 		self.payLoad   = payLoad
 		self.EOP       = EOP
-		self.maxSize   = 2**16
+		self.maxSize   = 2**16-1
 		self.leftovers = None
 		#==============================================================
 		# stuff the payload
@@ -54,7 +54,7 @@ class HeadDismounter():
 		self.totalOfPackages = self.head[5] + self.head[6] + self.head[7] + self.head[8]
 		self.extension       = self.head[9]
 		self.payLoadSize     = int.from_bytes(self.head[10:12], "big")
-		print(f"payLoad size read: {self.payLoadSize}")
+		# print(f"payLoad size read: {self.payLoadSize}")
 
 	def getExtension(self):
 		return self.extension

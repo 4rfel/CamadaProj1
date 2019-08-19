@@ -1,9 +1,8 @@
 from classPackage import PackageMounter, PackageDismounter, HeadDismounter
-from math import ceil
+from math import ceil, floor
 from enlace import enlace
 import subprocess
 from time import sleep, time
-from progressBar import progressBar
 
 from tkinter import filedialog, Tk
 
@@ -11,6 +10,26 @@ from tkinter import filedialog, Tk
 def install(name):
     subprocess.call(['pip', 'install', name])
 
+def progressBar(ActualPackage, totalPacotes, Throughput, Overhead, message):
+    a = floor((ActualPackage/totalPacotes)*100)
+    stdscr.addstr(0,   0,  "ActualPackage"                                 )
+    stdscr.addstr(0, 115,  "Total of Packages"                             )
+    stdscr.addstr(1,   0, f"{ActualPackage}"                               )
+    stdscr.addstr(1, 125, f"{totalPacotes}"                                )
+    stdscr.addstr(1,  13,  "[" + "#"*a + "-"*(100-a) + "]"                 )    
+    stdscr.addstr(3,   0, f"Throughput: {Throughput} packages/second"      )
+    stdscr.addstr(4,   0, f"Overhead  : {Overhead} PackageSize/PayLoadSize")
+    stdscr.addstr(5,   0, f"Message   : {message}")
+
+    stdscr.refresh()
+
+    if ActualPackage==totalPacotes-1:
+        print(f"""ActualPackage                                                                                                      Total of Packages
+{ActualPackage+1}          [####################################################################################################]          {totalPacotes}
+
+Throughput: {Throughput} packages/second
+Overhead  : {Overhead} PackageSize/PayLoadSize
+Message: {message}""")
     
 try:
     import curses
@@ -63,7 +82,6 @@ class ControlerClient():
 
         # self.com = enlace(serialName)
         # self.com.enable()
-
         self.sendPackage()
 
     def sendPackage(self):
@@ -71,13 +89,14 @@ class ControlerClient():
             payload = self.leftover + self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
         else:
             payload = self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
+        
+        print(len(payload))
 #              packageNumber                           response        totalPackages                             extension         
         head = self.actualPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + self.extensionByte
         packageMounter = PackageMounter(head=head, payLoad=payload, EOP=self.EOP)
         package = packageMounter.getPackage()
         # self.com.sendData(package)
         com.sendData(package)
-        print(len(package))
 
     def readPackage(self):
         print("client read")
@@ -109,25 +128,9 @@ class ControlerClient():
         elif self.messageRead==0x06:
             self.sendPackage()
 
-    def printProgressBar (self, iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
-        """
-        Call in a loop to create terminal progress bar
-        @params:
-            iteration   - Required  : current iteration (Int)
-            total       - Required  : total iterations (Int)
-            prefix      - Optional  : prefix string (Str)
-            suffix      - Optional  : suffix string (Str)
-            decimals    - Optional  : positive number of decimals in percent complete (Int)
-            length      - Optional  : character length of bar (Int)
-            fill        - Optional  : bar fill character (Str)
-        """
-        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-        filledLength = int(length * iteration // total)
-        bar = fill * filledLength + '-' * (length - filledLength)
-        print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
-        # Print New Line on Complete
-        if iteration == total: 
-            print()
+    def printProgressBar (self, packageNumber, totalOfPackages):
+        # progressBar(packageNumber, totalOfPackages, 10, 2, "0x05")
+        pass
 
 class ControlerServer():
     def __init__(self):
@@ -185,25 +188,9 @@ class ControlerServer():
         else:
             pass
     
-    def printProgressBar (self, iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
-        """
-        Call in a loop to create terminal progress bar
-        @params:
-            iteration   - Required  : current iteration (Int)
-            total       - Required  : total iterations (Int)
-            prefix      - Optional  : prefix string (Str)
-            suffix      - Optional  : suffix string (Str)
-            decimals    - Optional  : positive number of decimals in percent complete (Int)
-            length      - Optional  : character length of bar (Int)
-            fill        - Optional  : bar fill character (Str)
-        """
-        percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
-        filledLength = int(length * iteration // total)
-        bar = fill * filledLength + '-' * (length - filledLength)
-        print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end = '\r')
-        # Print New Line on Complete
-        if iteration == total: 
-            print()
+    def printProgressBar (self, packageNumber, totalOfPackages):
+        # progressBar(packageNumber, totalOfPackages, 10, 2, "0x05")
+        pass
 
 '''
 response:
