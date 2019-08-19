@@ -7,7 +7,7 @@ class PackageMounter():
 		self.head      = head
 		self.payLoad   = payLoad
 		self.EOP       = EOP
-		self.maxSize   = 128
+		self.maxSize   = 2**16
 		self.leftovers = None
 		#==============================================================
 		# stuff the payload
@@ -25,7 +25,7 @@ class PackageMounter():
 				self.payLoad = self.payLoad[:index  ] + bytes([0x00]) + self.payLoad[index:  ]
 				self.payLoad = self.payLoad[:index+2] + bytes([0x00]) + self.payLoad[index+2:]
 		#==============================================================
-		# make the size of the payload 128
+		# make the size of the payload 2**16
 		totalSize = 16+len(self.payLoad)
 		if totalSize > self.maxSize:
 			self.payLoad   = self.payLoad[:self.maxSize]
@@ -33,7 +33,7 @@ class PackageMounter():
         #==============================================================
 		# adding the payload size to the head
 		payLoadSize = len(self.payLoad)
-		self.head = self.head + payLoadSize.to_bytes(1, "big")
+		self.head = self.head + payLoadSize.to_bytes(2, "big")
 		#==============================================================
 		# create the package with head payload and EOP
 		self.package = self.head + self.payLoad + self.EOP
@@ -53,7 +53,8 @@ class HeadDismounter():
 		self.message         = self.head[4] 
 		self.totalOfPackages = self.head[5] + self.head[6] + self.head[7] + self.head[8]
 		self.extension       = self.head[9]
-		self.payLoadSize     = self.head[11]
+		self.payLoadSize     = int.from_bytes(self.head[10:12], "big")
+		print(f"payLoad size read: {self.payLoadSize}")
 
 	def getExtension(self):
 		return self.extension
@@ -85,7 +86,7 @@ class PackageDismounter():
 		self.message         = self.head[4] 
 		self.totalOfPackages = self.head[5] + self.head[6] + self.head[7] + self.head[8]
 		self.extension       = self.head[9]
-		self.payLoadSize     = self.head[11]
+		self.payLoadSize     = int.from_bytes(self.head[10:12], "big")
 
 		self.payLoad_EOP     = self.package[:]
 
@@ -99,27 +100,6 @@ class PackageDismounter():
 		self.timeOut  = False
 		startTime     = time.time()
 		#=======================================================
-		# while index < len(self.payLoad_EOP):
-		# # searching for the EOP
-		# 	f1 = self.payLoad_EOP[index-3]
-		# 	f2 = self.payLoad_EOP[index-2]
-		# 	f3 = self.payLoad_EOP[index-1]
-		# 	f4 = self.payLoad_EOP[index  ]
-		# 			# print(index, self.payLoadSize)
-		# 	if f1==0xf1 and f2==0xf2 and f3==0xf3 and f4==0xf4:
-		# 		if index-3 != self.payLoadSize:
-		# 			# print(index-3, self.payLoadSize)
-		# 			#response 0x02, EOP wrong position
-		# 			self.MSG0x02()
-		# 			self.foundEOP = True
-		# 		else:
-					
-		# 			self.EOPPosition = index-3
-		# 			#response 0x05, success
-		# 			self.MSG0x05()
-		# 	index += 1
-			
-
 
 		index         = 7
 		while index < len(self.payLoad_EOP):
@@ -143,7 +123,6 @@ class PackageDismounter():
 					self.MSG0x02()
 					self.foundEOP = True
 				else:
-					
 					self.EOPPosition = index-3
 					#response 0x05, success
 					self.MSG0x05()
@@ -180,30 +159,30 @@ class PackageDismounter():
 		#==============================================================
 
 
-#                                 packageNumber                    response        totalPackages                              extension       ??
+#                                 packageNumber                    response        totalPackages                              extension      
 	def MSG0x01(self):
-		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x01]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00])
+		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x01]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) 
 		print("0x01 - EOP not found")
 
 	def MSG0x02(self):
-		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x02]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00])
+		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x02]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff])
 		print("0x02 - EOP wrong position")
 	
 	def MSG0x03(self):
-		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x03]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00])
+		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x03]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff])
 		print("0x03 - payLoadSize != realPlayLoadSize")
 	
 	def MSG0x04(self):
-		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x04]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00])
+		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x04]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff])
 		print("0x04 - wrong packageNumber")
 	
 	def MSG0x05(self):
 		self.foundEOP = True
-		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x05]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00])
+		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x05]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff])
 		print("0x05 - success")
 
 	def MSG0x06(self):
-		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x06]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00])
+		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x06]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff])
 		print("0x06 - timeout")
 		
 	def getResponse(self):

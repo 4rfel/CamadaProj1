@@ -68,15 +68,16 @@ class ControlerClient():
 
     def sendPackage(self):
         if self.leftover!=None:
-            payload = self.leftover + self.file[(self.actualPackage-1)*112:self.actualPackage*112]
+            payload = self.leftover + self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
         else:
-            payload = self.file[(self.actualPackage-1)*112:self.actualPackage*112]
-#              packageNumber                           response        totalPackages                             extension            ??
-        head = self.actualPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + self.extensionByte + bytes([0x00]) 
+            payload = self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
+#              packageNumber                           response        totalPackages                             extension         
+        head = self.actualPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + self.extensionByte
         packageMounter = PackageMounter(head=head, payLoad=payload, EOP=self.EOP)
         package = packageMounter.getPackage()
         # self.com.sendData(package)
         com.sendData(package)
+        print(len(package))
 
     def readPackage(self):
         print("client read")
@@ -149,7 +150,7 @@ class ControlerServer():
     def sendPackage(self):
         # self.com.sendData(self.response)
         print("Server sent response")
-        print(f"Server response {self.response}")
+        print(f"Server response {self.response}\n")
         print("")
         com.sendData(self.response)
         if self.timeout:
@@ -178,6 +179,7 @@ class ControlerServer():
         
     def saveFile(self, filename):
         if self.fullFile != None:
+            print(len(self.fullFile))
             with open(filename + "." + self.extension, "wb") as file:
                 file.write(self.fullFile)
         else:
