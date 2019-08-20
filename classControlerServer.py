@@ -118,7 +118,6 @@ class ControlerServer():
         else:
             self.fullFile = payLoad
         if packageNumber >= totalOfPackages:
-            #print(payLoad)
             newfilename = input("Nome para o novo arquivo: ")
             self.saveFile(newfilename)
         else:
@@ -129,14 +128,13 @@ class ControlerServer():
     def saveFile(self, filename):
         if self.fullFile != None:
             print(self.extension)
-            with open(filename + "." + self.extension, "wb") as file:
+            with open("fotos/" + filename + "." + self.extension, "wb") as file:
                 file.write(self.fullFile)
         else:
             pass
     
     def printProgressBar (self, packageNumber, totalOfPackages,tp,oh):
         progressBar(packageNumber, totalOfPackages, tp, oh, "0x05")
-        #pass
 
 '''
 response:
@@ -162,13 +160,6 @@ extension:
 	- 0x0a: .dll
 	- 0xff: sem extensão
 '''
-
-# root = Tk()
-# root.withdraw()
-
-# filepath = filedialog.askopenfilename()
-
-# controlerClient = ControlerClient(filepath=filepath)
 
 controlerServer = ControlerServer()
 
