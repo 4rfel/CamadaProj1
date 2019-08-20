@@ -86,7 +86,8 @@ class ControlerClient():
 
     def sendPackage(self):
         if self.leftover!=None:
-            payload = self.leftover + self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
+            payload = self.leftover + self.file[(self.actualPackage-1)*2**16
+            :self.actualPackage*2**16]
         else:
             payload = self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
         
