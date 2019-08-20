@@ -58,80 +58,9 @@ serialName = serial.tools.list_ports.comports()[0][0]
 com = enlace(serialName)
 com.enable()
 
-# stdscr = curses.initscr()
+stdscr = curses.initscr()
 # curses.noecho()
 # curses.cbreak()
-
-class ControlerClient():
-    def __init__(self, filepath):
-        with open(str(filepath),"rb") as logo:
-            self.file = logo.read()
-        self.fileSize = len(self.file)
-        self.totalOfPackages = ceil(self.fileSize/128)
-        self.actualPackage = 1
-        self.leftover = None
-        self.EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
-
-        self.extension_types = {'txt':0x00,'py':0x01,'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
-        self._resp_ = {0x01:"EoP not found",0x02:"EoP wrong position",0x03:"payLoadSize != realPayloadSize",0x04:"Wrong package number",0x05:"Success",0x06:"Timeout",0xff:None}
-        self.extension_types_reverse = {0x00:"txt",0x01:"py",'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
-        self.messageRead = None
-
-        self.extension = filepath.split(".")[1].lower()
-        self.extensionByte = bytes([self.extension_types[self.extension]])
-
-        # self.com = enlace(serialName)
-        # self.com.enable()
-        self.sendPackage()
-
-    def sendPackage(self):
-        if self.leftover!=None:
-            payload = self.leftover + self.file[(self.actualPackage-1)*2**16
-            :self.actualPackage*2**16]
-        else:
-            payload = self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
-        
-        print(len(payload))
-#              packageNumber                           response        totalPackages                             extension         
-        head = self.actualPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + self.extensionByte
-        packageMounter = PackageMounter(head=head, payLoad=payload, EOP=self.EOP)
-        package = packageMounter.getPackage()
-        # self.com.sendData(package)
-        com.sendData(package)
-
-    def readPackage(self):
-        print("client read")
-
-        head, headSize = com.getData(12)
-
-        headDismounter = HeadDismounter(head)
-        self.packageNumberSent = headDismounter.getPackageNumber()
-        payLoadSize = head.getPayLoadSize()
-        package, packageSize = com.getData(payLoadSize+4)
-
-        packageRead = PackageDismounter(package, head)
-        self.messageRead = packageRead.getMessage()
-        self.messageInterpreter()
-
-    def messageInterpreter(self):
-        if   self.messageRead==0x01:
-            self.sendPackage()
-        elif self.messageRead==0x02:
-            self.sendPackage()
-        elif self.messageRead==0x03:
-            self.sendPackage()
-        elif self.messageRead==0x04:
-            self.actualPackage = self.packageNumberSent
-            self.sendPackage()
-        elif self.messageRead==0x05:
-            self.actualPackage += 1
-            self.sendPackage()
-        elif self.messageRead==0x06:
-            self.sendPackage()
-
-    def printProgressBar (self, packageNumber, totalOfPackages):
-        # progressBar(packageNumber, totalOfPackages, 10, 2, "0x05")
-        pass
 
 class ControlerServer():
     def __init__(self):
@@ -146,9 +75,11 @@ class ControlerServer():
         
         self.response = None
         self.timeout = False
+        self.time = time()
+        self.throughput = 0
+        self.overhead = 0
 
         self.fullFile = None
-
         self.readPackage()
 
     def sendPackage(self):
@@ -156,42 +87,56 @@ class ControlerServer():
         print("Server sent response")
         print(f"Server response {self.response}\n")
         print("")
+        self.time = time()
         com.sendData(self.response)
         if self.timeout:
             self.sendPackage()
             sleep(0.1)
+        self.readPackage()
 
     def readPackage(self):
+        while com.rx.getIsEmpty():
+            pass
         head, headSize = com.getData(12)
         headDismounter = HeadDismounter(head)
         self.extension = self.extension_types_reverse[headDismounter.getExtension()]
         self.packageNumberSent = headDismounter.getPackageNumber()
         payLoadSize = headDismounter.getPayLoadSize()
+        print(f"payLoad size: {payLoadSize}")
         package, packageSize = com.getData(payLoadSize+4)
+        self.throughput = 1/(time() - self.time)
+        self.overhead = (packageSize + headSize)/payLoadSize
         packageRead = PackageDismounter(package, head)
         payLoad = packageRead.getPayLoad()
         packageNumber = packageRead.getPackageNumber()
         totalOfPackages = packageRead.getTotalOfPackages()
-        self.printProgressBar(packageNumber, totalOfPackages)
+        self.printProgressBar(packageNumber, totalOfPackages,self.throughput,self.overhead)
         self.response = packageRead.getResponse()
+
         if self.fullFile != None:
             self.fullFile += payLoad
         else:
             self.fullFile = payLoad
-        self.sendPackage()
+        if packageNumber >= totalOfPackages:
+            #print(payLoad)
+            newfilename = input("Nome para o novo arquivo: ")
+            self.saveFile(newfilename)
+        else:
+            self.sendPackage()
+
         
         
     def saveFile(self, filename):
         if self.fullFile != None:
-            print(len(self.fullFile))
+            print(self.extension)
             with open(filename + "." + self.extension, "wb") as file:
                 file.write(self.fullFile)
         else:
             pass
     
-    def printProgressBar (self, packageNumber, totalOfPackages):
-        # progressBar(packageNumber, totalOfPackages, 10, 2, "0x05")
-        pass
+    def printProgressBar (self, packageNumber, totalOfPackages,tp,oh):
+        progressBar(packageNumber, totalOfPackages, tp, oh, "0x05")
+        #pass
 
 '''
 response:
@@ -218,12 +163,12 @@ extension:
 	- 0xff: sem extensão
 '''
 
-root = Tk()
-root.withdraw()
+# root = Tk()
+# root.withdraw()
 
-filepath = filedialog.askopenfilename()
+# filepath = filedialog.askopenfilename()
 
-controlerClient = ControlerClient(filepath=filepath)
+# controlerClient = ControlerClient(filepath=filepath)
 
 controlerServer = ControlerServer()
 
@@ -232,7 +177,3 @@ print("-------------------------")
 print("Comunicação encerrada")
 print("-------------------------")
 print("")
-
-newfilename = input("Nome para o novo arquivo: ")
-controlerServer.saveFile(newfilename)
-

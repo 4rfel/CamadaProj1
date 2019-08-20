@@ -144,13 +144,13 @@ class PackageDismounter():
 				self.payLoad_EOP = self.payLoad_EOP[:index-6] + self.payLoad_EOP[index-5:]
 				self.payLoad_EOP = self.payLoad_EOP[:index-5] + self.payLoad_EOP[index-4:]
 		#===============================================================
-		self.payLoad = self.payLoad_EOP[:]
+		self.payLoad = self.payLoad_EOP[:-4]
 		# response 0x01, EOP not found
 		if not self.foundEOP:
 			self.MSG0x01()
 		#==============================================================
 		# mount the response package
-		payLoadResponse = bytes([0x00])
+		payLoadResponse = bytes([0x00])*5
 		EOP 			= bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4])
 		packageMounter  = PackageMounter(head=self.headResponse, payLoad=payLoadResponse, EOP=EOP) 
 		#==============================================================
@@ -162,6 +162,7 @@ class PackageDismounter():
 #                                 packageNumber                    response        totalPackages                              extension      
 	def MSG0x01(self):
 		self.headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x01]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) 
+		print(self.payLoad_EOP)
 		print("0x01 - EOP not found")
 
 	def MSG0x02(self):
