@@ -96,7 +96,7 @@ class ControlerServer():
         self.extension = self.extension_types_reverse[headDismounter.getExtension()]
         self.packageNumberSent = headDismounter.getPackageNumber()
         payLoadSize = headDismounter.getPayLoadSize()
-        print(f"payLoad size: {payLoadSize}")
+        print(f"head: {head}")
         package, packageSize = self.com.getData(payLoadSize+4)
         self.throughput = 1/(time() - self.time)
         self.overhead = (packageSize + headSize)/payLoadSize
@@ -104,6 +104,8 @@ class ControlerServer():
         payLoad = packageRead.getPayLoad()
         packageNumber = packageRead.getPackageNumber()
         totalOfPackages = packageRead.getTotalOfPackages()
+        print(f"total packages: {totalOfPackages}")
+
         self.printProgressBar(packageNumber, totalOfPackages,self.throughput,self.overhead)
         self.response = packageRead.getResponse()
 

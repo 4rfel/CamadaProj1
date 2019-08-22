@@ -35,9 +35,9 @@ class PackageMounter():
 class HeadDismounter():
 	def __init__(self, head):
 		self.head = head
-		self.packageNumber   = self.head[0 ] + self.head[1] + self.head[2] + self.head[3]
-		self.message         = self.head[4 ] 
-		self.totalOfPackages = self.head[5 ] + self.head[6] + self.head[7] + self.head[8]
+		self.packageNumber   = int.from_bytes(self.head[1:5], "big")
+		self.message         = self.head[4] 
+		self.totalOfPackages = int.from_bytes(self.head[5:9], "big")
 		self.extension       = self.head[9 ]
 		self.payLoadSize     = self.head[11]
 
@@ -65,9 +65,9 @@ class PackageDismounter():
 		self.packageSize     = len(package)
 
 		self.head            = head
-		self.packageNumber   = self.head[0] + self.head[1] + self.head[2] + self.head[3]
+		self.packageNumber   = int.from_bytes(self.head[1:5], "big")
 		self.message         = self.head[4] 
-		self.totalOfPackages = self.head[5] + self.head[6] + self.head[7] + self.head[8]
+		self.totalOfPackages = int.from_bytes(self.head[5:9], "big")
 		self.extension       = self.head[9]
 		self.payLoadSize     = self.head[11]
 
@@ -91,7 +91,7 @@ class PackageDismounter():
 			self.MSG0x05()
 		#==============================================================
 		# mount the response package
-		payLoadResponse = bytes([0x00])*5
+		payLoadResponse = bytes([0x00])
 		EOP 			= bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3])+ bytes([0xf4])
 		packageMounter  = PackageMounter(head=self.headResponse, payLoad=payLoadResponse, EOP=EOP) 
 		#==============================================================
