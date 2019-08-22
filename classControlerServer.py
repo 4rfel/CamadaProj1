@@ -58,7 +58,7 @@ serialName = serial.tools.list_ports.comports()[0][0]
 com = enlace(serialName)
 com.enable()
 
-stdscr = curses.initscr()
+# stdscr = curses.initscr()
 # curses.noecho()
 # curses.cbreak()
 
@@ -94,6 +94,7 @@ class ControlerServer():
             sleep(0.1)
         self.readPackage()
 
+
     def readPackage(self):
         while com.rx.getIsEmpty():
             pass
@@ -122,7 +123,6 @@ class ControlerServer():
             self.saveFile(newfilename)
         else:
             self.sendPackage()
-
         
         
     def saveFile(self, filename):
@@ -134,7 +134,8 @@ class ControlerServer():
             pass
     
     def printProgressBar (self, packageNumber, totalOfPackages,tp,oh):
-        progressBar(packageNumber, totalOfPackages, tp, oh, "0x05")
+        # progressBar(packageNumber, totalOfPackages, tp, oh, "0x05")
+        pass
 
 '''
 response:
