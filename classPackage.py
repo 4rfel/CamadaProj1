@@ -35,7 +35,7 @@ class PackageMounter():
 class HeadDismounter():
 	def __init__(self, head):
 		self.head = head
-		self.packageNumber   = int.from_bytes(self.head[1:5], "big")
+		self.packageNumber   = int.from_bytes(self.head[0:4], "big")
 		self.message         = self.head[4] 
 		self.totalOfPackages = int.from_bytes(self.head[5:9], "big")
 		self.extension       = self.head[9 ]

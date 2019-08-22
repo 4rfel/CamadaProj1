@@ -104,6 +104,7 @@ class ControlerServer():
         payLoad = packageRead.getPayLoad()
         packageNumber = packageRead.getPackageNumber()
         totalOfPackages = packageRead.getTotalOfPackages()
+        print(f"pacote atual: {packageNumber}")
         print(f"total packages: {totalOfPackages}")
 
         self.printProgressBar(packageNumber, totalOfPackages,self.throughput,self.overhead)
