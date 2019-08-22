@@ -70,7 +70,7 @@ class ControlerClient():
         with open(str(filepath),"rb") as logo:
             self.file = logo.read()
         self.fileSize = len(self.file)
-        self.totalOfPackages = ceil(self.fileSize/2**16)
+        self.totalOfPackages = ceil(self.fileSize/2**7)
         self.actualPackage = 1
         self.leftover = None
         self.EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
@@ -91,14 +91,14 @@ class ControlerClient():
 
     def sendPackage(self):
         if self.leftover!=None:
-            payload = self.leftover + self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
+            payload = self.leftover + self.file[(self.actualPackage-1)*2**7:self.actualPackage*2**7]
         else:
-            payload = self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
+            payload = self.file[(self.actualPackage-1)*2**7:self.actualPackage*2**7]
         
         print("Tamanho do Payload: ",len(payload))
         if self.packageNumberSent <= self.totalOfPackages:
     #              packageNumber                           response        totalPackages                             extension         
-            head = self.actualPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + self.extensionByte
+            head = self.actualPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + self.extensionByte + bytes([0x00])
             packageMounter = PackageMounter(head=head, payLoad=payload, EOP=self.EOP)
             package = packageMounter.getPackage()
             print("sending package...")
