@@ -6,6 +6,8 @@ from time import sleep, time
 
 from tkinter import filedialog, Tk
 
+from sys import exit
+
 
 def install(name):
     subprocess.call(['pip', 'install', name])
@@ -93,27 +95,28 @@ class ControlerClient():
         else:
             payload = self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
         
-        print(len(payload))
+        print("Tamanho do Payload: ",len(payload))
         if self.packageNumberSent <= self.totalOfPackages:
     #              packageNumber                           response        totalPackages                             extension         
             head = self.actualPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + self.extensionByte
             packageMounter = PackageMounter(head=head, payLoad=payload, EOP=self.EOP)
             package = packageMounter.getPackage()
-            print("sending package")
+            print("sending package...")
             # self.com.sendData(package)
             self.time = time()
             com.sendData(package)
-            print("package sent")
+            print("package sent...")
             self.readPackage()
 
     def readPackage(self):
         while com.rx.getIsEmpty():
             pass
-        print("client read")
+        print("reading response from server...")
 
         head, headSize = com.getData(12)
 
         headDismounter = HeadDismounter(head)
+        print("Response from transmition: ",self._resp_[headDismounter.getMessage()])
         self.packageNumberSent = headDismounter.getPackageNumber()
         payLoadSize = headDismounter.getPayLoadSize()
         package, packageSize = com.getData(payLoadSize+4)
@@ -126,6 +129,9 @@ class ControlerClient():
 
         self.messageRead = packageRead.getMessage()
         self.messageInterpreter()
+        if self.packageNumberSent >= self.totalOfPackages:
+            com.disable()
+            exit(0)
 
     def messageInterpreter(self):
         if self.messageRead==0x01:
@@ -153,7 +159,7 @@ response:
 	- 0x02: EOP wrong position
 	- 0x03: payLoadSize != realPlayLoadSize
 	- 0x04: wrong packageNumber
-	- 0x05: success 
+	- 0x05: success
 	- 0x06: timeout
 	- 0xff: none
 
