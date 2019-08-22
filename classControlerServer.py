@@ -55,9 +55,6 @@ finally:
 
 serialName = serial.tools.list_ports.comports()[0][0]
 
-com = enlace(serialName)
-com.enable()
-
 # stdscr = curses.initscr()
 # curses.noecho()
 # curses.cbreak()
@@ -67,8 +64,8 @@ class ControlerServer():
         self.extension = None
         self.messageRead = None
 
-        # self.com = enlace(serialName)
-        # self.com.enable()
+        self.com = enlace(serialName)
+        self.com.enable()
         self.extension_types = {'txt':0x00,'py':0x01,'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
         self._resp_ = {0x01:"EoP not found",0x02:"EoP wrong position",0x03:"payLoadSize != realPayloadSize",0x04:"Wrong package number",0x05:"Success",0x06:"Timeout",0xff:None}
         self.extension_types_reverse = {0x00:"txt",0x01:"py",0x02:'png',0x03:'jpg',0x04:'jpeg',0x05:'pdf',0x06:'gif',0x07:'docx',0x08:'js',0x09:'java',0x0a:'dll'}
@@ -83,12 +80,8 @@ class ControlerServer():
         self.readPackage()
 
     def sendPackage(self):
-        # self.com.sendData(self.response)
-        print("Server sent response")
-        print(f"Server response {self.response}\n")
-        print("")
         self.time = time()
-        com.sendData(self.response)
+        self.com.sendData(self.response)
         if self.timeout:
             self.sendPackage()
             sleep(0.1)
@@ -96,15 +89,15 @@ class ControlerServer():
 
 
     def readPackage(self):
-        while com.rx.getIsEmpty():
+        while self.com.rx.getIsEmpty():
             pass
-        head, headSize = com.getData(12)
+        head, headSize = self.com.getData(12)
         headDismounter = HeadDismounter(head)
         self.extension = self.extension_types_reverse[headDismounter.getExtension()]
         self.packageNumberSent = headDismounter.getPackageNumber()
         payLoadSize = headDismounter.getPayLoadSize()
         print(f"payLoad size: {payLoadSize}")
-        package, packageSize = com.getData(payLoadSize+4)
+        package, packageSize = self.com.getData(payLoadSize+4)
         self.throughput = 1/(time() - self.time)
         self.overhead = (packageSize + headSize)/payLoadSize
         packageRead = PackageDismounter(package, head)
@@ -127,9 +120,9 @@ class ControlerServer():
         
     def saveFile(self, filename):
         if self.fullFile != None:
-            print(self.extension)
             with open("fotos/" + filename + "." + self.extension, "wb") as file:
                 file.write(self.fullFile)
+            self.com.disable()            
         else:
             pass
     
@@ -164,7 +157,6 @@ extension:
 
 controlerServer = ControlerServer()
 
-com.disable()
 print("-------------------------")
 print("Comunicação encerrada")
 print("-------------------------")

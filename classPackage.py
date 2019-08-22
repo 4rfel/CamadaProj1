@@ -21,7 +21,7 @@ class PackageMounter():
         #==============================================================
 		# adding the payload size to the head
 		payLoadSize = len(self.payLoad)
-		self.head = self.head + payLoadSize.to_bytes(1, "big")
+		self.head = self.head + bytes([payLoadSize])
 		#==============================================================
 		# create the package with head payload and EOP
 		self.package = self.head + self.payLoad + self.EOP
@@ -35,11 +35,11 @@ class PackageMounter():
 class HeadDismounter():
 	def __init__(self, head):
 		self.head = head
-		self.packageNumber   = self.head[0] + self.head[1] + self.head[2] + self.head[3]
-		self.message         = self.head[4] 
-		self.totalOfPackages = self.head[5] + self.head[6] + self.head[7] + self.head[8]
-		self.extension       = self.head[9]
-		self.payLoadSize     = int.from_bytes(self.head[11], "big")
+		self.packageNumber   = self.head[0 ] + self.head[1] + self.head[2] + self.head[3]
+		self.message         = self.head[4 ] 
+		self.totalOfPackages = self.head[5 ] + self.head[6] + self.head[7] + self.head[8]
+		self.extension       = self.head[9 ]
+		self.payLoadSize     = self.head[11]
 
 	def getExtension(self):
 		return self.extension
@@ -69,7 +69,7 @@ class PackageDismounter():
 		self.message         = self.head[4] 
 		self.totalOfPackages = self.head[5] + self.head[6] + self.head[7] + self.head[8]
 		self.extension       = self.head[9]
-		self.payLoadSize     = int.from_bytes(self.head[11], "big")
+		self.payLoadSize     = self.head[11]
 
 		self.payLoad_EOP     = self.package[:]
 
