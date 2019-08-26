@@ -1,26 +1,22 @@
 from tkinter import Tk, filedialog
 from enlace import enlace
-from Controlers import Client,Server
+import serial
+from classControlerClient import ControlerClient
 
-serialPort = "COM5"
+serialName = serial.tools.list_ports.comports()[0][0]
+
+# com = enlace(serialName)
+# com.enable()
+
 root = Tk()
 root.withdraw()
 
-comm = enlace(serialPort)
-comm.enable()
-
 filepath = filedialog.askopenfilename()
 
-server = Server(serialPort, comm)
-# server = Server(serialPort)
-# server.startThreads()
+controlerClient = ControlerClient(filepath=filepath, serial=serialName)
 
-
-client = Client(filepath,serialPort, comm)
-# client = Client(filepath,serialPort)
-# client.startThreads()
-
-client.sendPackage()
-server.start()
-
-comm.disable()
+# controlerServer = ControlerServer()
+print("-------------------------")
+print("Comunicação encerrada")
+print("-------------------------")
+print("")

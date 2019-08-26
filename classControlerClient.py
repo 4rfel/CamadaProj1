@@ -3,20 +3,18 @@ from math import ceil, floor
 from enlace import enlace
 import subprocess
 from time import sleep, time
-
 from tkinter import filedialog, Tk
-
 from sys import exit
 
 
 def install(name):
     subprocess.call(['pip', 'install', name])
 
-def progressBar(ActualPackage, totalPacotes, Throughput, Overhead, message):
-    a = floor((ActualPackage/totalPacotes)*100)
-    stdscr.addstr(0,   0,  "ActualPackage"                                 )
+def progressBar(currentPackage, totalPacotes, Throughput, Overhead, message):
+    a = floor((currentPackage/totalPacotes)*100)
+    stdscr.addstr(0,   0,  "currentPackage"                                 )
     stdscr.addstr(0, 115,  "Total of Packages"                             )
-    stdscr.addstr(1,   0, f"{ActualPackage}"                               )
+    stdscr.addstr(1,   0, f"{currentPackage}"                               )
     stdscr.addstr(1, 125, f"{totalPacotes}"                                )
     stdscr.addstr(1,  13,  "[" + "#"*a + "-"*(100-a) + "]"                 )    
     stdscr.addstr(3,   0, f"Throughput: {Throughput} packages/second"      )
@@ -25,9 +23,9 @@ def progressBar(ActualPackage, totalPacotes, Throughput, Overhead, message):
 
     stdscr.refresh()
 
-    if ActualPackage==totalPacotes-1:
-        print(f"""ActualPackage                                                                                                      Total of Packages
-{ActualPackage+1}          [####################################################################################################]          {totalPacotes}
+    if currentPackage==totalPacotes-1:
+        print(f"""currentPackage                                                                                                      Total of Packages
+{currentPackage+1}          [####################################################################################################]          {totalPacotes}
 
 Throughput: {Throughput} packages/second
 Overhead  : {Overhead} PackageSize/PayLoadSize
@@ -54,24 +52,13 @@ except ImportError:
 finally:
     import serial
 
-
-serialName = serial.tools.list_ports.comports()[0][0]
-
-com = enlace(serialName)
-com.enable()
-
-
-# stdscr = curses.initscr()
-# curses.noecho()
-# curses.cbreak()
-
 class ControlerClient():
     def __init__(self, filepath):
         with open(str(filepath),"rb") as logo:
             self.file = logo.read()
         self.fileSize = len(self.file)
-        self.totalOfPackages = ceil(self.fileSize/2**16)
-        self.actualPackage = 1
+        self.headSize = 12
+        self.currentPackage = 1
         self.leftover = None
         self.EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
 
@@ -81,39 +68,53 @@ class ControlerClient():
         self.messageRead = None
         self.time = time()
         self.packageNumberSent = 1
+        self.totalOfPackages = ceil((self.fileSize+len(self.EOP)+self.headSize)/128)
 
-        self.extension = filepath.split(".")[1].lower()
+        self.extension = filepath.split(".")[-1].lower()
         self.extensionByte = bytes([self.extension_types[self.extension]])
 
-        # self.com = enlace(serialName)
-        # self.com.enable()
+        # com = enlace(self.serialName)
+        # com.enable()
         self.sendPackage()
+
+
+    def run(self):
+        for c in range(self.totalOfPackages):
+            self.sendPackage()
+            self.readPackage()
+            self.messageInterpreter()
+            print(c)
+
+
 
     def sendPackage(self):
         if self.leftover!=None:
-            payload = self.leftover + self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
+            payload = self.leftover + self.file[(self.currentPackage-1)*2**7:self.currentPackage*2**7]
         else:
-            payload = self.file[(self.actualPackage-1)*2**16:self.actualPackage*2**16]
+            payload = self.file[(self.currentPackage-1)*2**7:self.currentPackage*2**7]
         
         print("Tamanho do Payload: ",len(payload))
         if self.packageNumberSent <= self.totalOfPackages:
     #              packageNumber                           response        totalPackages                             extension         
-            head = self.actualPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + self.extensionByte
+            head = self.currentPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + self.extensionByte + bytes([0x00])
             packageMounter = PackageMounter(head=head, payLoad=payload, EOP=self.EOP)
             package = packageMounter.getPackage()
-            print("sending package...")
-            # self.com.sendData(package)
             self.time = time()
             com.sendData(package)
+            com.rx.clearBuffer()
             print("package sent...")
-            self.readPackage()
+            sleep(0.1)
+            #self.readPackage()
+        else:
+            print("Finalizado...")
+            exit(0)
 
     def readPackage(self):
         while com.rx.getIsEmpty():
             pass
         print("reading response from server...")
 
-        head, headSize = com.getData(12)
+        head, headSize = com.getData(self.headSize)
 
         headDismounter = HeadDismounter(head)
         print("Response from transmition: ",self._resp_[headDismounter.getMessage()])
@@ -128,26 +129,37 @@ class ControlerClient():
         print(package)
 
         self.messageRead = packageRead.getMessage()
-        self.messageInterpreter()
+        #self.messageInterpreter()
         if self.packageNumberSent >= self.totalOfPackages:
             com.disable()
             exit(0)
 
     def messageInterpreter(self):
         if self.messageRead==0x01:
-            self.sendPackage()
+            # self.sendPackage()
+            print(self._resp_[self.messageRead])
         elif self.messageRead==0x02:
-            self.sendPackage()
+            # self.sendPackage()
+            print(self._resp_[self.messageRead])
+
         elif self.messageRead==0x03:
-            self.sendPackage()
+            # self.sendPackage()
+            print(self._resp_[self.messageRead])
+
         elif self.messageRead==0x04:
-            self.actualPackage = self.packageNumberSent
-            self.sendPackage()
+            self.currentPackage = self.packageNumberSent
+            # self.sendPackage()
+            print(self._resp_[self.messageRead])
         elif self.messageRead==0x05:
-            self.actualPackage += 1
-            self.sendPackage()
+            self.currentPackage += 1
+            # self.sendPackage()
+            print(self._resp_[self.messageRead])
         elif self.messageRead==0x06:
-            self.sendPackage()
+            # self.sendPackage()
+            print(self._resp_[self.messageRead])
+        else:
+            # self.sendPackage()
+            print(self._resp_[self.messageRead])
 
     def printProgressBar (self, packageNumber, totalOfPackages):
         # progressBar(packageNumber, totalOfPackages, 10, 2, "0x05")
@@ -178,20 +190,20 @@ extension:
 	- 0xff: sem extensão
 '''
 
+
+serialName = serial.tools.list_ports.comports()[0][0]
+
+com = enlace(serialName)
+com.enable()
+
 root = Tk()
 root.withdraw()
 
 filepath = filedialog.askopenfilename()
 
 controlerClient = ControlerClient(filepath=filepath)
-
-# controlerServer = ControlerServer()
-
+controlerClient.run()
 com.disable()
-print("-------------------------")
-print("Comunicação encerrada")
-print("-------------------------")
-print("")
 
 # newfilename = input("Nome para o novo arquivo: ")
 # controlerServer.saveFile("Chegada")
