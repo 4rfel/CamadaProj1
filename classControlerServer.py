@@ -61,9 +61,9 @@ finally:
 
 serialName = serial.tools.list_ports.comports()[0][0]
 
-# stdscr = curses.initscr()
-# curses.noecho()
-# curses.cbreak()
+stdscr = curses.initscr()
+curses.noecho()
+curses.cbreak()
 
 class ControlerServer():
 	def __init__(self):
@@ -85,6 +85,8 @@ class ControlerServer():
 		self.totalOfPackages = 1
 
 		self.fullFile = None
+		# self.printProgressBar(self.packageNumber, self.totalOfPackages, self.throughput, self.overhead, "0x05")
+
 		self.readPackage()
 		self.run()
 
@@ -146,9 +148,11 @@ class ControlerServer():
 		self.totalOfPackages = packageRead.getTotalOfPackages()
 		print(f"\npacote atual: {self.packageNumber}")
 		print(f"total packages: {self.totalOfPackages}")
-
-		self.printProgressBar(self.packageNumber, self.totalOfPackages, self.throughput, self.overhead)
 		self.response = packageRead.getResponse()
+		message = packageRead.getMessageSent()
+		message = str(message).split("'")[1].replace("\\", "0")
+
+		self.printProgressBar(self.packageNumber, self.totalOfPackages, self.throughput, self.overhead, message)
 
 		if self.fullFile != None:
 			self.fullFile += payLoad
@@ -169,9 +173,9 @@ class ControlerServer():
 		else:
 			pass
 	
-	def printProgressBar (self, packageNumber, totalOfPackages,tp,oh):
-		# progressBar(packageNumber, totalOfPackages, tp, oh, "0x05")
-		pass
+	def printProgressBar (self, packageNumber, totalOfPackages, tp, oh, message):
+		progressBar(packageNumber, totalOfPackages, tp, oh, message)
+		# pass
 
 '''
 response:
