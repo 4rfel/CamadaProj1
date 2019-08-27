@@ -4,6 +4,8 @@ from enlace import enlace
 import subprocess
 from time import sleep, time
 import signal
+from curses.textpad import Textbox, rectangle
+
 
 from tkinter import filedialog, Tk
 
@@ -23,7 +25,7 @@ def progressBar(ActualPackage, totalPacotes, Throughput, Overhead, message):
 	stdscr.addstr(1,   0, f"{ActualPackage}"                               )
 	stdscr.addstr(1, 125, f"{totalPacotes}"                                )
 	stdscr.addstr(1,  13,  "[" + "#"*a + "-"*(100-a) + "]"                 )    
-	stdscr.addstr(3,   0, f"Throughput: {Throughput} packages/second"      )
+	stdscr.addstr(3,   0, f"Throughput: {round(Throughput, 4)} packages/second"      )
 	stdscr.addstr(4,   0, f"Overhead  : {Overhead} PackageSize/PayLoadSize")
 	stdscr.addstr(5,   0, f"Message   : {message}")
 
@@ -64,6 +66,7 @@ serialName = serial.tools.list_ports.comports()[0][0]
 stdscr = curses.initscr()
 curses.noecho()
 curses.cbreak()
+curses.curs_set(True)
 
 class ControlerServer():
 	def __init__(self):
@@ -99,7 +102,7 @@ class ControlerServer():
 	def sendPackage(self):
 		self.time = time()
 		self.com.sendData(self.response)
-		print(f"response sent: {self.response}")
+		# print(f"response sent: {self.response}")
 		if self.timeout:
 			self.sendPackage()
 			sleep(0.1)
@@ -119,11 +122,11 @@ class ControlerServer():
 				payLoadResponse = bytes([0x00])
 				packageMounter  = PackageMounter(head=headResponse, payLoad=payLoadResponse, EOP=EOP)
 				self.response = packageMounter.getPackage()
-				print("0x06 - timeout")
+				# print("0x06 - timeout")
 				self.sendPackage()
 
 		headDismounter = HeadDismounter(head)
-		print(f"head: {head}")
+		# print(f"head: {head}")
 		self.extension = self.extension_types_reverse[headDismounter.getExtension()]
 		self.packageNumberSent = headDismounter.getPackageNumber()
 		payLoadSize = headDismounter.getPayLoadSize()
@@ -138,7 +141,7 @@ class ControlerServer():
 				payLoadResponse = bytes([0x00])
 				packageMounter  = PackageMounter(head=headResponse, payLoad=payLoadResponse, EOP=EOP)
 				self.response = packageMounter.getPackage()
-				print("0x06 - timeout")
+				# print("0x06 - timeout")
 				self.sendPackage()
 		self.throughput = 1/(time() - self.time)
 		self.overhead = (packageSize + headSize)/payLoadSize
@@ -146,8 +149,8 @@ class ControlerServer():
 		payLoad = packageRead.getPayLoad()
 		self.packageNumber = packageRead.getPackageNumber()
 		self.totalOfPackages = packageRead.getTotalOfPackages()
-		print(f"\npacote atual: {self.packageNumber}")
-		print(f"total packages: {self.totalOfPackages}")
+		# print(f"\npacote atual: {self.packageNumber}")
+		# print(f"total packages: {self.totalOfPackages}")
 		self.response = packageRead.getResponse()
 		message = packageRead.getMessageSent()
 		message = str(message).split("'")[1].replace("\\", "0")
@@ -159,7 +162,18 @@ class ControlerServer():
 		else:
 			self.fullFile = payLoad
 		if self.packageNumber >= self.totalOfPackages:
-			newfilename = input("Nome para o novo arquivo: ")
+			editwin = curses.newwin(1, 30, 10, 1)
+			rectangle(stdscr, 9, 0, 11, 42)
+			stdscr.refresh()
+
+			box = Textbox(editwin)
+
+			# Let the user edit until Ctrl-G is struck.
+			box.edit()
+
+			# Get resulting contents
+			newfilename = box.gather()
+			# newfilename = input("Nome para o novo arquivo: ")
 			self.saveFile(newfilename)
 		# else:
 		# 	self.sendPackage()
@@ -175,7 +189,6 @@ class ControlerServer():
 	
 	def printProgressBar (self, packageNumber, totalOfPackages, tp, oh, message):
 		progressBar(packageNumber, totalOfPackages, tp, oh, message)
-		# pass
 
 '''
 response:
