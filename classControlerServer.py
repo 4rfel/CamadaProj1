@@ -1,4 +1,4 @@
-from classPackage import PackageMounter, PackageDismounter, HeadDismounter
+from classPackage import PackageMounter, PackageDismounter, Head
 from math import ceil, floor
 from enlace import enlace
 import subprocess
@@ -18,22 +18,23 @@ signal.signal(signal.SIGINT, timeout_handler)
 def install(name):
 	subprocess.call(['pip', 'install', name])
 
-def progressBar(ActualPackage, totalPacotes, Throughput, Overhead, message):
-	a = floor((ActualPackage/totalPacotes)*100)
-	stdscr.addstr(0,   0,  "ActualPackage"                                 )
-	stdscr.addstr(0, 115,  "Total of Packages"                             )
-	stdscr.addstr(1,   0, f"{ActualPackage}"                               )
-	stdscr.addstr(1, 125, f"{totalPacotes}"                                )
-	stdscr.addstr(1,  13,  "[" + "#"*a + "-"*(100-a) + "]"                 )    
-	stdscr.addstr(3,   0, f"Throughput: {round(Throughput, 4)} packages/second"      )
-	stdscr.addstr(4,   0, f"Overhead  : {Overhead} PackageSize/PayLoadSize")
+def progressBar(current_package, totalPacotes, Throughput, Overhead, message):
+	a = (current_package/totalPacotes)*100
+	aa = floor(a)
+	stdscr.addstr(0,   0,  "Current Package"                                     )
+	stdscr.addstr(0, 115,  "Total of Packages"                                 )
+	stdscr.addstr(1,   0, f"{current_package}"                                   )
+	stdscr.addstr(1, 125, f"{totalPacotes}"                                    )
+	stdscr.addstr(1,  13,  "[" + "#"*a + "-"*(100-aa) + "]"                    )    
+	stdscr.addstr(3,   0, f"Throughput: {round(Throughput, 4)} packages/second")
+	stdscr.addstr(4,   0, f"Overhead  : {Overhead} PackageSize/PayLoadSize"    )
 	stdscr.addstr(5,   0, f"Message   : {message}")
 
 	stdscr.refresh()
 
-	if ActualPackage==totalPacotes-1:
+	if current_package==totalPacotes-1:
 		print(f"""ActualPackage                                                                                                      Total of Packages
-{ActualPackage+1}          [####################################################################################################]          {totalPacotes}
+{current_package+1}          [####################################################################################################]          {totalPacotes}
 
 Throughput: {Throughput} packages/second
 Overhead  : {Overhead} PackageSize/PayLoadSize
@@ -61,123 +62,116 @@ finally:
 	import serial
 
 
-serialName = serial.tools.list_ports.comports()[0][0]
-
 stdscr = curses.initscr()
 curses.noecho()
 curses.cbreak()
 curses.curs_set(True)
-
+'''
+	- 0x01: connection request
+	- 0x02: connection granted 
+	- 0x03: sending data
+	- 0x04: success
+	- 0x05: timeout
+	- 0x06: error
+'''
 class ControlerServer():
-	def __init__(self):
+	def __init__(self, serialName):
 		self.extension = None
 		self.messageRead = None
+		self.server_number = 1
 
 		self.com = enlace(serialName)
 		self.com.enable()
-		self.extension_types = {'txt':0x00,'py':0x01,'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
-		self._resp_ = {0x01:"EoP not found",0x02:"EoP wrong position",0x03:"payLoadSize != realPayloadSize",0x04:"Wrong package number",0x05:"Success",0x06:"Timeout",0xff:None}
-		self.extension_types_reverse = {0x00:"txt",0x01:"py",0x02:'png',0x03:'jpg',0x04:'jpeg',0x05:'pdf',0x06:'gif',0x07:'docx',0x08:'js',0x09:'java',0x0a:'dll'}
-		
-		self.response = None
-		self.timeout = False
-		self.time = time()
+		self.extension_types = {'txt':0x00,'py':0x01,'png':0x02,'jpg':0x03,'jpeg':0x04
+		,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
+
+		self.extension_types_reverse = {0x00:"txt",0x01:"py",0x02:'png',0x03:'jpg'
+		,0x04:'jpeg',0x05:'pdf',0x06:'gif',0x07:'docx',0x08:'js',0x09:'java',0x0a:'dll'}
+
+		self._resp_ = {0x01:"connection request",0x02:"connection granted",0x03:"sending data"
+		,0x04:"success",0x05:"timeout",0x06:"error"}
+
+		self.response   = None
 		self.throughput = 0
-		self.overhead = 0
-		self.packageNumber = 1
-		self.totalOfPackages = 1
+		self.overhead   = 0
+		self.ocioso     = True
 
 		self.fullFile = None
-		# self.printProgressBar(self.packageNumber, self.totalOfPackages, self.throughput, self.overhead, "0x05")
 
-		self.readPackage()
 		self.run()
 
 	def run(self):
-		print(self.totalOfPackages)
-		for i in range(self.totalOfPackages):
-			self.readPackage()
-			self.sendPackage()
+		while self.ocioso:
+			self.check_msg_0x01()
+		while self.package_number < self.total_of_packages:
+			self.throughput_timer = time()
+			self.read_package()
+			progressBar(self.package_number, self.total_of_packages, self.throughput, self.overhead, self.msg_sent)
+		self.com.disable()
 
 	def sendPackage(self):
-		self.time = time()
 		self.com.sendData(self.response)
-		# print(f"response sent: {self.response}")
-		if self.timeout:
-			self.sendPackage()
-			sleep(0.1)
-		# self.readPackage()
-
-
-	def readPackage(self):
-		while self.com.rx.getIsEmpty():
-			pass
-		# signal.alarm(5)
-		try:
-			head, headSize = self.com.getData(12)
-		except Exception as ex:
-			if "0x06" in ex:
-				headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x06]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00])
-				EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
-				payLoadResponse = bytes([0x00])
-				packageMounter  = PackageMounter(head=headResponse, payLoad=payLoadResponse, EOP=EOP)
-				self.response = packageMounter.getPackage()
-				# print("0x06 - timeout")
-				self.sendPackage()
-
-		headDismounter = HeadDismounter(head)
-		# print(f"head: {head}")
-		self.extension = self.extension_types_reverse[headDismounter.getExtension()]
-		self.packageNumberSent = headDismounter.getPackageNumber()
-		payLoadSize = headDismounter.getPayLoadSize()
-		# signal.alarm(5)
-		try:
-			package, packageSize = self.com.getData(payLoadSize+4)
-
-		except Exception as ex:
-			if "0x06" in ex:
-				headResponse = self.packageNumber.to_bytes(4, "big") + bytes([0x06]) + self.totalOfPackages.to_bytes(4, "big") + bytes([0xff]) + bytes([0x00])
-				EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
-				payLoadResponse = bytes([0x00])
-				packageMounter  = PackageMounter(head=headResponse, payLoad=payLoadResponse, EOP=EOP)
-				self.response = packageMounter.getPackage()
-				# print("0x06 - timeout")
-				self.sendPackage()
-		self.throughput = 1/(time() - self.time)
-		self.overhead = (packageSize + headSize)/payLoadSize
-		packageRead = PackageDismounter(package, head)
-		payLoad = packageRead.getPayLoad()
-		self.packageNumber = packageRead.getPackageNumber()
-		self.totalOfPackages = packageRead.getTotalOfPackages()
-		# print(f"\npacote atual: {self.packageNumber}")
-		# print(f"total packages: {self.totalOfPackages}")
-		self.response = packageRead.getResponse()
-		message = packageRead.getMessageSent()
-		message = str(message).split("'")[1].replace("\\", "0")
-
-		self.printProgressBar(self.packageNumber, self.totalOfPackages, self.throughput, self.overhead, message)
-
-		if self.fullFile != None:
-			self.fullFile += payLoad
+	
+	def check_ocioso(self):
+		if self.ocioso:
+			while self.com.rx.getIsEmpty():
+				sleep(1)
+			self.check_msg_0x01()
 		else:
-			self.fullFile = payLoad
-		if self.packageNumber >= self.totalOfPackages:
-			editwin = curses.newwin(1, 30, 10, 1)
-			rectangle(stdscr, 9, 0, 11, 42)
-			stdscr.refresh()
+			self.send_response(bytes([0x01]))
+			self.package_number = 1
+			self.timer_timeout_start = time()
+			self.read_package()
+			
 
-			box = Textbox(editwin)
+	def check_msg_0x01(self):
+		head_bytes = self.com.getData(10)[0]
+		head = Head(head_bytes)
+		msg = head.get_message()
+		server_number = head.get_server_number()
+		self.total_of_packages = head.get_total_of_packages()
+		self.message_interpreter(msg, server_number)
+	
+	def message_interpreter(self, msg, server_number):
+		if msg == bytes([0x01]):
+			if server_number == self.server_number:
+				self.ocioso = False
 
-			# Let the user edit until Ctrl-G is struck.
-			box.edit()
+	def send_response(self, msg):
+#              packageNumber*3 + msg*1 + totalPackages*3 + extension*1   + servidor number*1 + payload size*1 = 10bytes
+		head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])     + bytes([0x01]) 
+		response_mounter = PackageMounter(head, bytes([0x00]))
+		response = response_mounter.get_package()
+		self.com.sendData(response)
 
-			# Get resulting contents
-			newfilename = box.gather()
-			# newfilename = input("Nome para o novo arquivo: ")
-			self.saveFile(newfilename)
-		# else:
-		# 	self.sendPackage()
-		
+	def check_timers(self):
+		timer1_start = time()
+		while self.com.rx.getIsEmpty():
+			timer1_elapsed = time() - timer1_start
+			timer_timeout_elapsed = time() - self.timer_timeout_start
+			if timer_timeout_elapsed > 20:
+				self.ocioso = True
+				self.send_response(bytes([0x05]))
+				self.com.disable()
+			elif timer1_elapsed > 2:
+				self.send_response(bytes([0x04]))
+				self.read_package()
+
+	def read_package(self):
+		self.check_timers()
+		head_bytes = self.com.getDataTimer(10, self.timer_timeout_start)[0]
+		head = Head(head_bytes)
+		payload_size = head.get_payload_size()
+		payload_EOP = self.com.getDataTimer(payload_size+4, self.timer_timeout_start)[0]
+		package_dismounted = PackageDismounter(payload_EOP, head)
+		self.msg_sent = package_dismounted.get_message_sent()
+		self.send_response(self.msg_sent)
+		if self.msg_sent == bytes([0x04]):
+			self.package_number += 1
+
+		self.overhead   = package_dismounted.get_overhead()
+		elapsed_throughput_timer = time() - self.throughput_timer
+		self.throughput =  payload_size/elapsed_throughput_timer
 		
 	def saveFile(self, filename):
 		if self.fullFile != None:
@@ -192,13 +186,12 @@ class ControlerServer():
 
 '''
 response:
-	- 0x01: EOP not found
-	- 0x02: EOP wrong position
-	- 0x03: payLoadSize != realPlayLoadSize
-	- 0x04: wrong packageNumber
-	- 0x05: success 
-	- 0x06: timeout
-	- 0xff: none
+	- 0x01: connection request
+	- 0x02: connection granted 
+	- 0x03: sending data
+	- 0x04: success
+	- 0x05: timeout
+	- 0x06: error
 
 extension:
 	- 0x00: .txt
@@ -214,8 +207,8 @@ extension:
 	- 0x0a: .dll
 	- 0xff: sem extensão
 '''
-
-controlerServer = ControlerServer()
+serialName = serial.tools.list_ports.comports()[0][0]
+controlerServer = ControlerServer(serialName)
 
 print("-------------------------")
 print("Comunicação encerrada")
