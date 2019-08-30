@@ -79,7 +79,6 @@ class PackageDismounter():
 		eop_stuffed =  bytes([0x00]) + bytes([0xf1]) + bytes([0x00]) + bytes([0xf2]) \
 					 + bytes([0x00]) + bytes([0xf3]) + bytes([0x00]) + bytes([0xf4])
 
-		self.payload = bytearray()
 		#=======================================================
 		self.EOPPosition = self.payload_EOP.find(eop)
 		
