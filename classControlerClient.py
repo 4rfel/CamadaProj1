@@ -1,4 +1,4 @@
-from classPackage import PackageMounter, PackageDismounter, HeadDismounter
+from classPackage import PackageMounter, PackageDismounter, Head
 from math import ceil, floor
 from enlace import enlace
 import subprocess
@@ -53,127 +53,130 @@ finally:
     import serial
 
 class ControlerClient():
-    def __init__(self, filepath):
+    def __init__(self, filepath, serial_name):
         with open(str(filepath),"rb") as logo:
             self.file = logo.read()
-        self.fileSize = len(self.file)
-        self.headSize = 12
-        self.currentPackage = 1
+        self.file_size = len(self.file)
+        self.current_package = 1
         self.leftover = None
-        self.EOP = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
 
-        self.extension_types = {'txt':0x00,'py':0x01,'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
-        self._resp_ = {0x01:"EoP not found",0x02:"EoP wrong position",0x03:"payLoadSize != realPayloadSize",0x04:"Wrong package number",0x05:"Success",0x06:"Timeout",0xff:None}
-        self.extension_types_reverse = {0x00:"txt",0x01:"py",'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
-        self.messageRead = None
+        self.com = enlace(serial_name)
+        self.com.enable()
+
+        self.extension_types = {'txt':0x00,'py':0x01,'png':0x02,'jpg':0x03,'jpeg':0x04,'pdf':0x05,
+        'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
+
+        self.extension_types_reverse = {0x00:"txt",0x01:"py",'png':0x02,'jpg':0x03,'jpeg':0x04,
+        'pdf':0x05,'gif':0x06,'docx':0x07,'js':0x08,'java':0x09,'dll':0x0a}
+
+        self._resp_ = {0x01:"connection request",0x02:"connection granted",0x03:"sending data"
+		,0x04:"success",0x05:"timeout",0x06:"error"}
+
+        self.message_read = bytes()
         self.time = time()
-        self.packageNumberSent = 1
-        self.totalOfPackages = ceil((self.fileSize+len(self.EOP)+self.headSize)/128)
+        #self.package_number_sent = 1
+        self.total_of_packages = ceil(self.file_size/128)
+
+        self.inicia = False
 
         self.extension = filepath.split(".")[-1].lower()
         self.extensionByte = bytes([self.extension_types[self.extension]])
 
-        # com = enlace(self.serialName)
-        # com.enable()
-        self.sendPackage()
-
-
     def run(self):
-        for c in range(self.totalOfPackages):
-            self.sendPackage()
-            self.readPackage()
-            self.messageInterpreter()
-            print(c)
+        if not self.inicia:
+            msg = bytes([0x01])
+            #      packageNumber*3 + msg*1 + totalPackages*3 + extension*1   + servidor number*1 + payload size*1 = 10bytes
+            head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])     + bytes([0x01]) 
+            montador = PackageMounter(head, bytes([0x00]))
+            contato = montador.get_package()
+            self.com.sendData(contato)
+            sleep(5)
+            if self.com.rx.getIsEmpty():
+                print("Trying new connection")
+                self.run()
+            response_server = self.com.getData(10)
+            head = Head(response_server)
+            if head.get_server_number != 0x01:
+                self.run()
+            else:
+                self.inicia = True
+                self.package_number_sent = 1
+                self.send_package()
 
+    def send_package(self):
+        if self.package_number_sent <= self.total_of_packages:
+            if self.leftover!=None:
+                payload = self.leftover + self.file[(self.package_number_sent-1)*2**7:self.package_number_sent*2**7]
+            else:
+                payload = self.file[(self.package_number_sent-1)*2**7:self.package_number_sent*2**7]
 
-
-    def sendPackage(self):
-        if self.leftover!=None:
-            payload = self.leftover + self.file[(self.currentPackage-1)*2**7:self.currentPackage*2**7]
+            msg = bytes([0x03])
+            #      packageNumber*3 + msg*1 + totalPackages*3 + extension*1   + servidor number*1 + payload size*1 = 10bytes
+            head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])     + bytes([0x01])
+            montador = PackageMounter(head, payload)
+            package = montador.get_package()
+            self.com.sendData(package)
+            self.timer_resent = time()
+            self.timer_timeout = time()
+            self.read_package()
         else:
-            payload = self.file[(self.currentPackage-1)*2**7:self.currentPackage*2**7]
+            print("Finalizado")
+            exit()
         
-        print("Tamanho do Payload: ",len(payload))
-        if self.packageNumberSent <= self.totalOfPackages:
-    #              packageNumber                           response        totalPackages                             extension         
-            head = self.currentPackage.to_bytes(4, "big") + bytes([0xff]) + self.totalOfPackages.to_bytes(4, "big") + self.extensionByte + bytes([0x00])
-            packageMounter = PackageMounter(head=head, payLoad=payload, EOP=self.EOP)
-            package = packageMounter.getPackage()
-            self.time = time()
-            com.sendData(package)
-            com.rx.clearBuffer()
-            print("package sent...")
-            sleep(0.1)
-            #self.readPackage()
+
+    def read_package(self):
+        head_bytes = self.com.getDataTimer(10,self.timer_timeout)
+        head = Head(head_bytes)
+        if head.get_server_number == bytes([0x01]) or head.get_message == bytes([0x04]):
+            payload_eop, payload_eop_size = self.com.getDataTimer(head.get_payload_size+4)
+            dismounter = PackageDismounter(payload_eop, head)
+            self.package_number_sent += 1
+            self.send_package()
         else:
-            print("Finalizado...")
-            exit(0)
+            if self.timer_resent-time() > 5:
+                msg = bytes([0x03])
+                head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])  + bytes([0x01])
+                montador = PackageMounter(head, bytes([0x00]))
+                package = montador.get_package()
+                self.com.sendData(package)
+                self.timer_resent = time()
 
-    def readPackage(self):
-        while com.rx.getIsEmpty():
-            pass
-        print("reading response from server...")
+            if self.timer_timeout-time() > 20:
+                msg = bytes([0x05])
+                head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])  + bytes([0x01])
+                montador = PackageMounter(head, bytes([0x00]))
+                package = montador.get_package()
+                self.com.sendData(package)
+                self.com.disable()
+                exit()
 
-        head, headSize = com.getData(self.headSize)
-
-        headDismounter = HeadDismounter(head)
-        print("Response from transmition: ",self._resp_[headDismounter.getMessage()])
-        self.packageNumberSent = headDismounter.getPackageNumber()
-        payLoadSize = headDismounter.getPayLoadSize()
-        package, packageSize = com.getData(payLoadSize+4)
-        dt = 1/(time()-self.time)
-        print("Throughput: ",dt, dt**(-1))
-
-        packageRead = PackageDismounter(package, head)
-
-        print(package)
-
-        self.messageRead = packageRead.getMessage()
-        #self.messageInterpreter()
-        if self.packageNumberSent >= self.totalOfPackages:
-            com.disable()
-            exit(0)
-
-    def messageInterpreter(self):
-        if self.messageRead==0x01:
-            # self.sendPackage()
-            print(self._resp_[self.messageRead])
-        elif self.messageRead==0x02:
-            # self.sendPackage()
-            print(self._resp_[self.messageRead])
-
-        elif self.messageRead==0x03:
-            # self.sendPackage()
-            print(self._resp_[self.messageRead])
-
-        elif self.messageRead==0x04:
-            self.currentPackage = self.packageNumberSent
-            # self.sendPackage()
-            print(self._resp_[self.messageRead])
-        elif self.messageRead==0x05:
-            self.currentPackage += 1
-            # self.sendPackage()
-            print(self._resp_[self.messageRead])
-        elif self.messageRead==0x06:
-            # self.sendPackage()
-            print(self._resp_[self.messageRead])
-        else:
-            # self.sendPackage()
-            print(self._resp_[self.messageRead])
-
-    def printProgressBar (self, packageNumber, totalOfPackages):
-        # progressBar(packageNumber, totalOfPackages, 10, 2, "0x05")
-        pass
+            else:
+                head_bytes, head_size = self.com.getDataTimer(10,self.timer_timeout)
+                if head_size == -1:    
+                    head = Head(head_bytes)                    
+                elif head.get_message == 0x06:
+                    head = Head(head_bytes)
+                    payload_size = head.get_payload_size()
+                    payload_eop , payload_eop_size = self.com.getDataTimer(payload_size+4, self.timer_timeout)
+                    if payload_eop_size != -1:
+                        self.package_number_sent = head.get_package_number
+                    msg = bytes([0x03])
+                    head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])  + bytes([0x01])
+                    montador = PackageMounter(head, bytes([0x00]))
+                    package = montador.get_package()
+                    self.com.sendData(package)
+                    self.timer_resent = time()
+                    self.timer_timeout = time()
+                self.read_package()
 
 '''
 response:
-	- 0x01: EOP not found
-	- 0x02: EOP wrong position
-	- 0x03: payLoadSize != realPlayLoadSize
-	- 0x04: wrong packageNumber
-	- 0x05: success
-	- 0x06: timeout
-	- 0xff: none
+	- 0x01: connection request
+	- 0x02: connection granted 
+	- 0x03: sending data
+	- 0x04: success
+	- 0x05: timeout
+	- 0x06: error
 
 extension:
 	- 0x00: .txt
@@ -190,18 +193,15 @@ extension:
 	- 0xff: sem extensão
 '''
 
-
+# print(serial.tools.list_ports.comports()[0])
 serialName = serial.tools.list_ports.comports()[0][0]
-
-com = enlace(serialName)
-com.enable()
 
 root = Tk()
 root.withdraw()
 
 filepath = filedialog.askopenfilename()
 
-controlerClient = ControlerClient(filepath=filepath)
+controlerClient = ControlerClient(filepath, serialName)
 controlerClient.run()
 com.disable()
 
