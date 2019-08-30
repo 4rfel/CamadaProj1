@@ -112,7 +112,7 @@ class RX(object):
             timer_timeout_elapsed = time.time() - timer_timeout
             time.sleep(0.001)
             if timer_timeout_elapsed > 20:
-                return True
+                return False
 #                 
         return(self.getBuffer(size))
 

@@ -65,6 +65,6 @@ class enlace(object):
         """
         # print('entrou na leitura e tentara ler ' + str(size) )
         data = self.rx.getNDataTimer(size, timer_timeout)
-        if data == True:
-            return True
+        if data == False:
+            return (-1,-1)
         return(data, len(data))
