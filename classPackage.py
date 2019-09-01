@@ -36,7 +36,7 @@ class Head():
 # packageNumber*3 + response*1 + totalPackages*3 + extension*1 + servidor number*1 + payload size*1 = 10bytes
 	def __init__(self, head):
 		self.head              = head
-		self.package_number    = int.from_bytes(self.head[0:4], "big")
+		self.current_package    = int.from_bytes(self.head[0:4], "big")
 		self.message           = self.head[3] 
 		self.total_of_packages = int.from_bytes(self.head[5:9], "big")
 		self.extension         = self.head[7]
@@ -49,8 +49,8 @@ class Head():
 	def get_message(self):
 		return self.message
 
-	def get_package_number(self):
-		return self.package_number
+	def get_current_package(self):
+		return self.current_package
 	
 	def get_total_of_packages(self):
 		return self.total_of_packages
@@ -69,9 +69,9 @@ class PackageDismounter():
 		self.package           = package
 		self.package_size      = len(package)
 
-		self.package_number    = head.get_package_number()
+		self.current_package    = head.get_current_package()
 		self.total_of_packages = head.get_total_of_packages()
-		self.payload_size      = head.get_pay_load_size()
+		self.payload_size      = head.get_payload_size()
 
 		self.payload_EOP       = self.package[:]
 
