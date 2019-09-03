@@ -92,7 +92,7 @@ class ControlerServer():
 		self.throughput = 0
 		self.overhead   = 0
 		self.ocioso     = True
-		self.fullFile   = None
+		self.fullFile   = bytearray()
 
 		self.run()
 
@@ -103,9 +103,13 @@ class ControlerServer():
 		# print("nao estou ocioso")
 		self.check_ocioso()
 		while self.current_package < self.total_of_packages:
-			print(f"\rpacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}", end="\r")
+			# print("")
+			# print(f"\rpacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}", end="\r")
+			print(f"pacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}")
+
 			# print("\rreading packages", end="\r")
 			self.throughput_timer = time()
+			self.timer_timeout_start = time()
 			self.read_package()
 			# self.print_progress_bar(self.current_package, self.total_of_packages, self.throughput, self.overhead, self.msg_sent)
 		# filename = self.get_filename()
@@ -128,54 +132,61 @@ class ControlerServer():
 		if self.ocioso:
 			while self.com.rx.getIsEmpty():
 				# write_curses("searching for connection")
-				print("\rsearching for connection", end="\r")
+				print("searching for connection")
+				# print("\rsearching for connection", end="\r")
 				sleep(1)
-			# print("message received")
+			print("message received")
 			# write_curses("message received")
 			self.check_msg_0x01()
 		else:
-			self.send_response(bytes([0x01]))
+			self.send_response(bytes([0x02]))
 			self.current_package = 1
 			self.timer_timeout_start = time()
-			self.read_package()
+			# self.read_package()
 
 	def check_msg_0x01(self):
 		# write_curses("checking if message received is type 0x01")
-		# print("checking if message received is type 0x01")
+		print("checking if message received is type 0x01")
 		head_bytes = self.com.getData(10)[0]
 		# print(f"head bytes: {head_bytes}")
 		head = Head(head_bytes)
+		print(f"head receive: {head_bytes}")
 		msg = head.get_message()
 		server_number = head.get_server_number()
 		self.total_of_packages = head.get_total_of_packages()
 		self.message_interpreter(msg, server_number)
+		self.extension = head.get_extension()
+		print(f"extension: {self.extension}")
 		resto_size = head.get_payload_size()
-		_, _ = self.com.getData(resto_size+4)
+		_ = self.com.getData(resto_size+4)
+		# self.com.fisica.flush()
 		# print(f"server wanted: {server_number}")
 	
 	def message_interpreter(self, msg, server_number):
-		# print("interpreting messages")
+		print("interpreting messages")
 		# print(f"message recived: {msg} \nserver number: {server_number}")
 		if msg == 0x01:
 			if server_number == self.server_number:
-				
 				self.ocioso = False
 
 	def send_response(self, msg):
-		# print("sending response")
+		print("sending response")
 #              packageNumber*3 + msg*1 + totalPackages*3 + extension*1   + servidor number*1 + payload size*1 = 10bytes
-		head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])     + bytes([0x01]) 
+		head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])
 		response_mounter = PackageMounter(head, bytes([0x00]))
 		response = response_mounter.get_package()
 		self.com.sendData(response)
 
 	def check_timers(self):
-		# print("checking timers")
+		print("checking timers")
 		timer1_start = time()
 		while self.com.rx.getIsEmpty():
 			timer1_elapsed = time() - timer1_start
 			timer_timeout_elapsed = time() - self.timer_timeout_start
 			if timer_timeout_elapsed > 20:
+				print("-----------------")
+				print("	   TIMED OUT")
+				print("-----------------")
 				self.ocioso = True
 				self.close_connection()
 			elif timer1_elapsed > 2:
@@ -183,7 +194,6 @@ class ControlerServer():
 				self.read_package()
 
 	def read_package(self):
-		print("reading package")
 		self.check_timers()
 		head_bytes, size = self.com.getDataTimer(10, self.timer_timeout_start)
 		if size == -1:
@@ -192,7 +202,6 @@ class ControlerServer():
 			head = Head(head_bytes)
 			payload_size = head.get_payload_size()
 			payload_EOP, size = self.com.getDataTimer(payload_size+4, self.timer_timeout_start)
-			print(f"payload_eop: {payload_EOP}\n")
 			if size == -1:
 				self.close_connection()
 			else:
@@ -201,7 +210,8 @@ class ControlerServer():
 				self.send_response(self.msg_sent)
 				if self.msg_sent == bytes([0x04]):
 					self.current_package += 1
-					self.fullFile += package_dismounted.get_payload()
+					payload = package_dismounted.get_payload()
+					self.fullFile += payload
 					self.overhead   = package_dismounted.get_overhead()
 					elapsed_throughput_timer = time() - self.throughput_timer
 					self.throughput =  payload_size/elapsed_throughput_timer
@@ -216,7 +226,9 @@ class ControlerServer():
 		progressBar(packageNumber, totalOfPackages, tp, oh, message)
 
 	def close_connection(self):
+		print("-----------------")
 		print("connection closed")
+		print("-----------------")
 		self.send_response(bytes([0x05]))
 		self.com.disable()
 		exit() 

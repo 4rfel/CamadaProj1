@@ -36,9 +36,9 @@ class Head():
 # packageNumber*3 + response*1 + totalPackages*3 + extension*1 + servidor number*1 + payload size*1 = 10bytes
 	def __init__(self, head):
 		self.head              = head
-		self.current_package    = int.from_bytes(self.head[0:4], "big")
+		self.current_package    = int.from_bytes(self.head[0:3], "big")
 		self.message           = self.head[3] 
-		self.total_of_packages = int.from_bytes(self.head[5:9], "big")
+		self.total_of_packages = int.from_bytes(self.head[4:7], "big")
 		self.extension         = self.head[7]
 		self.server_number     = self.head[8]
 		self.payload_size      = self.head[9]
@@ -83,7 +83,10 @@ class PackageDismounter():
 		self.EOPPosition = self.payload_EOP.find(eop)
 		
 		payload_stuffed = self.payload_EOP[:self.EOPPosition]
+		print(f"stuffed: {payload_stuffed} \n")
 		self.payload = payload_stuffed.replace(eop_stuffed, eop)
+		print(f"de stuffed: {self.payload}")
+
 		if self.EOPPosition == -1:
 			self.message_sent = bytes([0x06])
 		else:
