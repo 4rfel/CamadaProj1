@@ -98,6 +98,7 @@ class ControlerServer():
 
 	def run(self):
 		while self.ocioso:
+
 			# print("estou ocioso")
 			self.check_ocioso()
 		# print("nao estou ocioso")
@@ -108,10 +109,11 @@ class ControlerServer():
 			print(f"pacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}")
 
 			# print("\rreading packages", end="\r")
+
 			self.throughput_timer = time()
 			self.timer_timeout_start = time()
 			self.read_package()
-			# self.print_progress_bar(self.current_package, self.total_of_packages, self.throughput, self.overhead, self.msg_sent)
+			# self.print_progress_bar(self.package_number, self.total_of_packages, self.throughput, self.overhead, self.msg_sent)
 		# filename = self.get_filename()
 		filename = input("Filename: ")
 		self.saveFile(filename)
@@ -133,14 +135,17 @@ class ControlerServer():
 			while self.com.rx.getIsEmpty():
 				# write_curses("searching for connection")
 				print("searching for connection")
+
 				# print("\rsearching for connection", end="\r")
 				sleep(1)
 			print("message received")
 			# write_curses("message received")
 			self.check_msg_0x01()
 		else:
+
 			self.send_response(bytes([0x02]))
 			self.current_package = 1
+
 			self.timer_timeout_start = time()
 			# self.read_package()
 
@@ -148,13 +153,13 @@ class ControlerServer():
 		# write_curses("checking if message received is type 0x01")
 		print("checking if message received is type 0x01")
 		head_bytes = self.com.getData(10)[0]
-		# print(f"head bytes: {head_bytes}")
 		head = Head(head_bytes)
 		print(f"head receive: {head_bytes}")
 		msg = head.get_message()
 		server_number = head.get_server_number()
 		self.total_of_packages = head.get_total_of_packages()
 		self.message_interpreter(msg, server_number)
+
 		self.extension = head.get_extension()
 		print(f"extension: {self.extension}")
 		resto_size = head.get_payload_size()
@@ -209,6 +214,7 @@ class ControlerServer():
 				self.msg_sent = package_dismounted.get_message_sent()
 				self.send_response(self.msg_sent)
 				if self.msg_sent == bytes([0x04]):
+
 					self.current_package += 1
 					payload = package_dismounted.get_payload()
 					self.fullFile += payload

@@ -2,7 +2,7 @@ from classPackage import PackageMounter, PackageDismounter, Head
 from math import ceil, floor
 from enlace import enlace
 import subprocess
-from time import sleep, time
+from time import sleep, time, localtime
 from tkinter import filedialog, Tk
 from sys import exit
 
@@ -56,8 +56,11 @@ class ControlerClient():
     def __init__(self, filepath, serial_name):
         with open(str(filepath),"rb") as logo:
             self.file = logo.read()
+        # self.file = bytes([0x02])*23 + bytes([0xd4])*12 + bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4]) + bytes([0xa2])*23 + bytes([0x8b])*12
         self.file_size = len(self.file)
+        # print(self.file_size)
         self.current_package = 1
+        self.current_package_bytes = self.current_package.to_bytes(3,"big")
         self.leftover = None
 
         self.com = enlace(serial_name)
@@ -76,98 +79,143 @@ class ControlerClient():
         self.time = time()
         #self.package_number_sent = 1
         self.total_of_packages = ceil(self.file_size/128)
+        self.total_of_packages_bytes = self.total_of_packages.to_bytes(3,"big")
 
         self.inicia = False
 
         self.extension = filepath.split(".")[-1].lower()
-        self.extensionByte = bytes([self.extension_types[self.extension]])
+        self.extension_bytes = bytes([self.extension_types[self.extension]])
 
     def run(self):
-        if not self.inicia:
-            msg = bytes([0x01])
-            #      packageNumber*3 + msg*1 + totalPackages*3 + extension*1   + servidor number*1 + payload size*1 = 10bytes
-            head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])     + bytes([0x01]) 
-            montador = PackageMounter(head, bytes([0x00]))
-            contato = montador.get_package()
-            self.com.sendData(contato)
-            sleep(5)
-            if self.com.rx.getIsEmpty():
-                print("Trying new connection")
-                self.run()
-            response_server = self.com.getData(10)
-            head = Head(response_server)
-            if head.get_server_number != 0x01:
-                self.run()
-            else:
-                self.inicia = True
-                self.package_number_sent = 1
-                self.send_package()
-
-    def send_package(self):
-        if self.package_number_sent <= self.total_of_packages:
-            if self.leftover!=None:
-                payload = self.leftover + self.file[(self.package_number_sent-1)*2**7:self.package_number_sent*2**7]
-            else:
-                payload = self.file[(self.package_number_sent-1)*2**7:self.package_number_sent*2**7]
-
-            msg = bytes([0x03])
-            #      packageNumber*3 + msg*1 + totalPackages*3 + extension*1   + servidor number*1 + payload size*1 = 10bytes
-            head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])     + bytes([0x01])
-            montador = PackageMounter(head, payload)
-            package = montador.get_package()
-            self.com.sendData(package)
-            self.timer_resent = time()
-            self.timer_timeout = time()
-            self.read_package()
-        else:
-            print("Finalizado")
-            exit()
-        
-
-    def read_package(self):
-        head_bytes = self.com.getDataTimer(10,self.timer_timeout)
-        head = Head(head_bytes)
-        if head.get_server_number == bytes([0x01]) or head.get_message == bytes([0x04]):
-            payload_eop, payload_eop_size = self.com.getDataTimer(head.get_payload_size+4)
-            dismounter = PackageDismounter(payload_eop, head)
-            self.package_number_sent += 1
+        while not self.inicia:
+            # print("Phase 1")
+            self.send_0x01_check_0x02()
+        while self.current_package <= self.total_of_packages:
+            # print(self.current_package*2**7)
+            print(f"\rTotal de pacotes / Pacote Atual: {self.total_of_packages} {self.current_package}  Porcentagem: {round(100*self.current_package/self.total_of_packages,4)}%",end="\r")
             self.send_package()
+            self.timer_resend = self.timer_timeout = time()
+            self.check_0x04()
+        print("Tamanho do pacote: ",self.file_size)
+        print("--- Success ---")
+        self.close_connection()
+
+    def updateLog(self, msg, client_number, rem_dest, end, received_sent):
+        time_var = localtime()
+        year = time_var.tm_year
+        month = time_var.tm_mon
+        day = time_var.tm_mday
+        hour = time_var.tm_hour
+        minuto = time_var.tm_min
+        sec = time_var.tm_sec
+        date = f"{year}/{month}/{day} --- {hour}:{minuto}:{sec}"
+        text = f"Msg: {msg} --{received_sent}  {date}   {rem_dest}: {client_number}\n"
+        with open("server_log.txt", "a") as log:
+            log.write(text)
+        if end:
+            with open("server_log.txt", "a") as log:
+                log.write("====================================================================\n\n ")
+            
+    def send_package(self):
+        if self.leftover != None:
+            payload = self.leftover + self.file[(self.current_package-1)*2**7:self.current_package*2**7]
         else:
-            if self.timer_resent-time() > 5:
-                msg = bytes([0x03])
-                head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])  + bytes([0x01])
-                montador = PackageMounter(head, bytes([0x00]))
-                package = montador.get_package()
-                self.com.sendData(package)
-                self.timer_resent = time()
+            payload = self.file[(self.current_package-1)*2**7:self.current_package*2**7]
+        msg = bytes([0x03])
+        head = self.current_package.to_bytes(3,"big") + msg + self.total_of_packages_bytes + self.extension_bytes + bytes([0x01])
+        mounter = PackageMounter(head, payload)
+        self.leftover = mounter.get_leftovers()
+        package = mounter.get_package()
+        # print(package)
+        self.com.sendData(package)
+        self.updateLog(msg, 1, "Servidor", False, "Sent")
+        
+    def send_0x01_check_0x02(self):
+        # print("Sending T1 massage")
+        msg = bytes([0x01])
+        self.send_msg(0x01)
+        self.updateLog(msg, 1, "Servidor", False, "Enviado")
+        t0 = time()
+        recived_response = True
+        while self.com.rx.getIsEmpty():
+            t1 = time() - t0
+            if t1 > 5:
+                print("Timeout +5")
+                recived_response = False
+                break
+        if recived_response:
+            # print("getting data response 1")
+            head_bytes, _ = self.com.getData(10)
+            # self.com.fisica.flush()
+            head = Head(head_bytes)
+            _, _ = self.com.getData(head.get_payload_size()+4)
+            msg = head.get_message()
+            if msg == 0x02:
+                self.updateLog(msg, 1, "Servidor", False, "Recived")
+                self.inicia = True
+                    
+    def check_0x04(self):
+        # print("Checking T4 msg")
+        recived_response = True
+        # print("Phase 2")
+        while self.com.rx.getIsEmpty():
+            t1 = time() - self.timer_resend
+            # print(f"timer {t1}")
+            if t1 > 5:
+                print("\nTimer 1 reached 5 seconds\n")
+                recived_response = False
+                break
+            t2 = time() - self.timer_timeout
+            if t2 > 20:
+                print("\nTimeOut\n")
+                self.close_connection()
+                break
+        if recived_response:
+            # print("Recebeu Resposta")
+            head_bytes, _ = self.com.getData(10)
+            # print(f"head bytes: {head_bytes}")
+            head = Head(head_bytes)
+            msg_1 = head.get_message()
+            _ = self.com.getData(head.get_payload_size()+4)
+            # print(f"msg: {msg_1}")
+            if msg_1 != 0x04 and msg_1 != 0x06:
+                self.updateLog(msg_1, 1, "Recived", True, "Servidor")
+                self.close_connection()
+            if msg_1 == 0x04:
+                self.current_package += 1
+                self.updateLog(msg_1, 1, "Recived", False, "Servidor")
+            elif msg_1 == 0x06:
+                self.updateLog(msg_1, 1, "Recived", False, "Servidor")
+                self.com.fisica.flush()
+                # print("----------------------LEFTOVERS--------------------------")
+                # print(self.leftover)
+                # print("---------------------------------------------------------")
+                self.current_package = head.get_current_package()
+                print("\nResending...\n")
+                # self.close_connection()
+        else:
+            if self.current_package < self.total_of_packages:
+                self.send_package()
+                self.updateLog(3, 1, "Sent", False, "Servidor")
+                self.timer_resend = time()           
 
-            if self.timer_timeout-time() > 20:
-                msg = bytes([0x05])
-                head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])  + bytes([0x01])
-                montador = PackageMounter(head, bytes([0x00]))
-                package = montador.get_package()
-                self.com.sendData(package)
-                self.com.disable()
-                exit()
+    
+    def send_msg(self, msg):
+        head = self.current_package_bytes + bytes([msg]) + self.total_of_packages_bytes + self.extension_bytes + bytes([0x01])
+        mounter = PackageMounter(head,bytes([0x00]))
+        package = mounter.get_package()
+        # print("Sending package:"+f"{package}")
+        self.com.sendData(package)
+        self.updateLog(msg, 1, "Recived", False, "Servidor")
 
-            else:
-                head_bytes, head_size = self.com.getDataTimer(10,self.timer_timeout)
-                if head_size == -1:    
-                    head = Head(head_bytes)                    
-                elif head.get_message == 0x06:
-                    head = Head(head_bytes)
-                    payload_size = head.get_payload_size()
-                    payload_eop , payload_eop_size = self.com.getDataTimer(payload_size+4, self.timer_timeout)
-                    if payload_eop_size != -1:
-                        self.package_number_sent = head.get_package_number
-                    msg = bytes([0x03])
-                    head = bytes([0x00])*3 + msg   + bytes([0x00])*3 + bytes([0x00]) + bytes([0x01])  + bytes([0x01])
-                    montador = PackageMounter(head, bytes([0x00]))
-                    package = montador.get_package()
-                    self.com.sendData(package)
-                    self.timer_resent = time()
-                    self.timer_timeout = time()
-                self.read_package()
+    def close_connection(self):
+        print("\n----DISABLING----\n")
+        msg = 0x05
+        self.send_msg(0x05)
+        self.updateLog(msg, 1, "Sent", True, "Servidor")
+        self.com.disable()
+        exit()
+
 
 '''
 response:
@@ -203,7 +251,6 @@ filepath = filedialog.askopenfilename()
 
 controlerClient = ControlerClient(filepath, serialName)
 controlerClient.run()
-com.disable()
 
 # newfilename = input("Nome para o novo arquivo: ")
 # controlerServer.saveFile("Chegada")
