@@ -20,6 +20,7 @@ class PackageMounter():
         #==============================================================
 		# adding the payload size to the head
 		payload_size = len(payload)
+		# print(f"payload size: {payload_size}")
 		head = head + bytes([payload_size])
 		#==============================================================
 		# create the package with head payload and EOP
@@ -36,9 +37,9 @@ class Head():
 # packageNumber*3 + response*1 + totalPackages*3 + extension*1 + servidor number*1 + payload size*1 = 10bytes
 	def __init__(self, head):
 		self.head              = head
-		self.current_package    = int.from_bytes(self.head[0:4], "big")
+		self.current_package   = int.from_bytes(self.head[0:3], "big")
 		self.message           = self.head[3] 
-		self.total_of_packages = int.from_bytes(self.head[5:9], "big")
+		self.total_of_packages = int.from_bytes(self.head[4:7], "big")
 		self.extension         = self.head[7]
 		self.server_number     = self.head[8]
 		self.payload_size      = self.head[9]
