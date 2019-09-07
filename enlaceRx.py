@@ -75,7 +75,7 @@ class RX(object):
         """
         return(len(self.buffer))
 
-    def getAllBuffer(self, len):
+    def getAllBuffer(self):
         """ Read ALL reception buffer and clears it
         """
         self.threadPause()
@@ -103,10 +103,27 @@ class RX(object):
 #                 
         return(self.getBuffer(size))
 
+    def getNDataTimer(self, size, timer_timeout, timer2):
+        """ Read N bytes of data from the reception buffer
+        This function blocks until the number of bytes is received
+        """
+
+        while(self.getBufferLen() < size):
+            timer_timeout_elapsed = time.time() - timer_timeout
+            timer2_elapsed = time.time() - timer2
+            time.sleep(0.001)
+            if timer_timeout_elapsed > 20:
+                return -1
+            if timer2_elapsed > 2:
+                return -2
+#                 
+        return(self.getBuffer(size))
+
 
     def clearBuffer(self):
         """ Clear the reception buffer
         """
         self.buffer = b""
+
 
 
