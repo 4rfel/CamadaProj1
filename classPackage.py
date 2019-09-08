@@ -3,90 +3,86 @@ import time
 class PackageMounter():
 	"""
 	"""
-	def __init__(self, head, payLoad, EOP):
-		self.head      = head
-		self.payLoad   = payLoad
-		self.EOP       = EOP
-		self.maxSize   = 128
-		self.leftovers = None
+	def __init__(self, head, payload):
+		EOP         = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
+		eop_stuffed = bytes([0x00]) + bytes([0xf1]) + bytes([0x00]) + bytes([0xf2])\
+					+ bytes([0x00]) + bytes([0xf3]) + bytes([0x00]) + bytes([0xf4])
 		#==============================================================
 		# stuff the payload
 		payload = payload.replace(EOP, eop_stuffed)
 		#==============================================================
-		# make the size of the payload 128
-		totalSize = 16+len(self.payLoad)
-		if totalSize > self.maxSize:
-			self.payLoad   = self.payLoad[:self.maxSize]
-			self.leftovers = self.payLoad[self.maxSize:]
+		# make the size of the payload 2**7
+		totalSize = len(payload)
+		self.leftovers = bytearray()
+		if totalSize > 128:
+			payload   = payload[:128]
+			self.leftovers = payload[128:]
         #==============================================================
 		# adding the payload size to the head
-		payLoadSize = len(self.payLoad)
-		self.head = self.head + payLoadSize.to_bytes(1, "big")
+		payload_size = len(payload)
+		# print(f"payload size: {payload_size}")
+		head = head + bytes([payload_size])
 		#==============================================================
 		# create the package with head payload and EOP
-		self.package = self.head + self.payLoad + self.EOP
+		self.package = head + payload + EOP
 
-	def getPackage(self):
+	def get_package(self):
 		return self.package
 	
-	def getLeftovers(self):
+	def get_leftovers(self):
 		return self.leftovers
 
-class HeadDismounter():
-	def __init__(self, head):
-		self.head = head
-		# print("head",head)
-		# print(self.head[0], self.head[1], self.head[2], self.head[3])
-		self.packageNumber   = self.head[0] + self.head[1] + self.head[2] + self.head[3]
-		self.message         = self.head[4] 
-		self.totalOfPackages = self.head[5] + self.head[6] + self.head[7] + self.head[8]
-		self.extension       = self.head[9]
-		self.payLoadSize     = self.head[11]
 
-	def getExtension(self):
+class Head():
+# packageNumber*3 + response*1 + totalPackages*3 + extension*1 + servidor number*1 + payload size*1 = 10bytes
+	def __init__(self, head):
+		self.head              = head
+
+		self.current_package   = int.from_bytes(self.head[0:3], "big")
+		self.message           = self.head[3] 
+		self.total_of_packages = int.from_bytes(self.head[4:7], "big")
+		self.extension         = self.head[7]
+		self.server_number     = self.head[8]
+		self.payload_size      = self.head[9]
+
+	def get_extension(self):
 		return self.extension
 
-	def getMessage(self):
+	def get_message(self):
 		return self.message
 
-	def getPackageNumber(self):
-		return self.packageNumber
+	def get_current_package(self):
+		return self.current_package
 	
-	def getTotalOfPackages(self):
-		return self.getTotalOfPackages
+	def get_total_of_packages(self):
+		return self.total_of_packages
 
-	def getPayLoadSize(self):
-		return self.payLoadSize
+	def get_payload_size(self):
+		return self.payload_size
+
+	def get_server_number(self):
+		return self.server_number
 	
 
 class PackageDismounter():
 	"""
 	"""
-	def __init__(self, package, head, previous_package):
+	def __init__(self, package, head):
 		self.package           = package
 		self.package_size      = len(package)
 
-		self.head            = head
-		self.packageNumber   = self.head[0] + self.head[1] + self.head[2] + self.head[3]
-		self.message         = self.head[4] 
-		self.totalOfPackages = self.head[5] + self.head[6] + self.head[7] + self.head[8]
-		self.extension       = self.head[9]
-		self.payLoadSize     = self.head[11]
+		self.payload_size      = head.get_payload_size()
 
 		eop = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
 		eop_stuffed =  bytes([0x00]) + bytes([0xf1]) + bytes([0x00]) + bytes([0xf2]) \
 					 + bytes([0x00]) + bytes([0xf3]) + bytes([0x00]) + bytes([0xf4])
 
-		self.payLoad_EOP     = self.package[:]
-
-		self.payLoad = None
-		# print("package", self.package)
-		# print("payload+EOP",self.payLoad_EOP)
+		payload_EOP = self.package[:]
 
 		#=======================================================
-		self.EOP_position = self.payload_EOP.find(eop)
+		self.EOP_position = payload_EOP.find(eop)
 		
-		payload_stuffed = self.payload_EOP[:self.EOP_position]
+		payload_stuffed = payload_EOP[:self.EOP_position]
 		self.payload = payload_stuffed.replace(eop_stuffed, eop)
 
 		if self.EOP_position == -1 or self.EOP_position != self.payload_size:
@@ -97,31 +93,23 @@ class PackageDismounter():
 	def get_message_sent(self):
 		return self.message_sent
 	
-	def getOverHead(self):
-		return self.packageSize/self.payLoadSize
+	def get_overhead(self):
+		return self.package_size/self.payload_size
 	
 	def get_EOP_position(self):
 		return self.EOP_position
 	
-	def getPayLoad(self):
-		return self.payLoad
-
-	def getPackageNumber(self):
-		return self.packageNumber
-	
-	def getTotalOfPackages(self):
-		return self.totalOfPackages
-		
+	def get_payload(self):
+		return self.payload
 
 '''
 response:
-	- 0x01: EOP not found
-	- 0x02: EOP wrong position
-	- 0x03: payLoadSize != realPlayLoadSize
-	- 0x04: wrong packageNumber
-	- 0x05: success 
-	- 0x06: timeout
-	- 0xff: none
+	- 0x01: connection request
+	- 0x02: connection granted 
+	- 0x03: sending data
+	- 0x04: success
+	- 0x05: timeout
+	- 0x06: error
 
 extension:
 	- 0x00: .txt
@@ -137,14 +125,4 @@ extension:
 	- 0x0a: .dll
 	- 0xff: sem extensão
 '''
-headSize = 12
-#                   packageNumber   packageNumber   packageNumber    packageNumber    response        totalPackages   totalPackages   totalPackages   totalPackages   extension       ??
-# head     	      = bytes([0x00])   + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00]) + bytes([0x00]) + bytes([0x00]) + bytes([0x01]) + bytes([0xff]) + bytes([0x00])
-# payLoad  	      = bytes([0xff])*5 + bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4]) + bytes([0xff])*200    
-# EOP      	      = bytes([0xf1])   + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
-# packageMounter    = PackageMounter(head=head, payLoad=payLoad, EOP=EOP)
-# package           = packageMounter.getPackage()
-
-# packageDismounter = PackageDismounter(package=package)
-# response 		  = packageDismounter.getResponse()
-# print(response)
+# packageNumber*3 + response*1 + totalPackages*3 + extension*1 + servidor number*1 + payload size*1 = 10bytes

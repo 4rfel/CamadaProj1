@@ -43,26 +43,27 @@ def progressBar(ActualPackage, totalPacotes, Throughput, Overhead, message):
 
     stdscr.refresh()
 
-    if ActualPackage==totalPacotes-1:
+    if ActualPackage==totalPacotes:
         print(f"""ActualPackage                                                                                                      Total of Packages
 {ActualPackage+1}          [####################################################################################################]          {totalPacotes}
 
 Throughput: {Throughput} packages/second
 Overhead  : {Overhead} PackageSize/PayLoadSize
-Message: {message}""")
+Message   : {message}""")
 
-# stdscr = curses.initscr()
-# curses.noecho()
-# curses.cbreak()
-# totalPacotes = random.randint(10, 1000)
-# throughput = random.randint(10, 1000)
-# overhead = random.randint(1,200)/100
-# message = str(bytes([0x05])).split("'")[1].replace("\\", "0")
-# print(str(bytes([0x05])))
-# for pacoteAtual in range(totalPacotes):
-#     sleep(0.01)
-#     progressBar(pacoteAtual, totalPacotes, throughput, overhead, message)
+stdscr = curses.initscr()
+curses.noecho()
+curses.cbreak()
+totalPacotes = 500 #random.randint(10, 1000)
+throughput = random.randint(10, 1000)
+overhead = random.randint(1,200)/100
+message = str(bytes([0x05])).split("'")[1].replace("\\", "0")
+for pacoteAtual in range(totalPacotes):
+    sleep(0.01)
+    progressBar(pacoteAtual, totalPacotes, throughput, overhead, message)
     
-
-
-
+curses.echo()
+c = stdscr.getch()
+a = 20
+s = stdscr.getstr(6,0, a)
+print(s)
