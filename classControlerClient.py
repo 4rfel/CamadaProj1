@@ -110,7 +110,7 @@ class ControlerClient():
         sec = time_var.tm_sec
         date = f"{year}/{month}/{day} --- {hour}:{minuto}:{sec}"
         text = f"Msg: {msg} --{received_sent}  {date}   {rem_dest}: {client_number}\n"
-        with open("server_log.txt", "a") as log:
+        with open("client_log.txt", "a") as log:
             log.write(text)
         if end:
             with open("server_log.txt", "a") as log:
@@ -242,7 +242,7 @@ extension:
 '''
 
 # print(serial.tools.list_ports.comports()[0])
-serialName = serial.tools.list_ports.comports()[0][0]
+serialName = serial.tools.list_ports.comports()[1][0]
 
 root = Tk()
 root.withdraw()

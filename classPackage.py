@@ -9,7 +9,7 @@ class PackageMounter():
 					+ bytes([0x00]) + bytes([0xf3]) + bytes([0x00]) + bytes([0xf4])
 		#==============================================================
 		# stuff the payload
-		payload = payload.replace(EOP, eop_stuffed) 
+		payload = payload.replace(EOP, eop_stuffed)
 		#==============================================================
 		# make the size of the payload 2**7
 		totalSize = len(payload)
@@ -71,25 +71,21 @@ class PackageDismounter():
 		self.package           = package
 		self.package_size      = len(package)
 
-		self.current_package    = head.get_current_package()
-		self.total_of_packages = head.get_total_of_packages()
 		self.payload_size      = head.get_payload_size()
-
-		self.payload_EOP       = self.package[:]
 
 		eop = bytes([0xf1]) + bytes([0xf2]) + bytes([0xf3]) + bytes([0xf4])
 		eop_stuffed =  bytes([0x00]) + bytes([0xf1]) + bytes([0x00]) + bytes([0xf2]) \
 					 + bytes([0x00]) + bytes([0xf3]) + bytes([0x00]) + bytes([0xf4])
 
-		#=======================================================
-		self.EOPPosition = self.payload_EOP.find(eop)
-		
-		payload_stuffed = self.payload_EOP[:self.EOPPosition]
-		print(f"stuffed: {payload_stuffed} \n")
-		self.payload = payload_stuffed.replace(eop_stuffed, eop)
-		print(f"de stuffed: {self.payload}")
+		payload_EOP = self.package[:]
 
-		if self.EOPPosition == -1:
+		#=======================================================
+		self.EOP_position = payload_EOP.find(eop)
+		
+		payload_stuffed = payload_EOP[:self.EOP_position]
+		self.payload = payload_stuffed.replace(eop_stuffed, eop)
+
+		if self.EOP_position == -1 or self.EOP_position != self.payload_size:
 			self.message_sent = bytes([0x06])
 		else:
 			self.message_sent = bytes([0x04])
@@ -101,7 +97,7 @@ class PackageDismounter():
 		return self.package_size/self.payload_size
 	
 	def get_EOP_position(self):
-		return self.EOPPosition
+		return self.EOP_position
 	
 	def get_payload(self):
 		return self.payload
