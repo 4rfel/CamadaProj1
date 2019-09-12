@@ -20,7 +20,7 @@ def progressBar(current_package, totalPacotes, Throughput, Overhead, message):
 	stdscr.addstr(1,   0, f"{current_package}"                                    )
 	stdscr.addstr(1, 125, f"{totalPacotes}"                                       )
 	stdscr.addstr(1,  13,  "[" + "█"*aa + "-"*(100-aa) + "]"                      )    
-	stdscr.addstr(3,   0, f"Throughput   : {round(Throughput, 4)} packages/second")
+	stdscr.addstr(3,   0, f"Throughput   : {round(Throughput, 4)} bytes/second")
 	stdscr.addstr(4,   0, f"Overhead     : {Overhead} PackageSize/PayLoadSize"    )
 	stdscr.addstr(5,   0, f"Message Sent : {message}")
 
@@ -32,7 +32,7 @@ def progressBar(current_package, totalPacotes, Throughput, Overhead, message):
 		print(f"""ActualPackage                                                                                                      Total of Packages
 {current_package+1}          [██████████████████████████████████████████████████████████████████████████████████████████████████]          {totalPacotes}
 
-Throughput   : {Throughput} packages/second
+Throughput   : {Throughput} bytes/second
 Overhead     : {Overhead} PackageSize/PayLoadSize
 Message Sent : {message}""")
 	
@@ -101,19 +101,21 @@ class ControlerServer():
 
 	def run(self):
 		while self.ocioso:
-
 			# print("estou ocioso")
 			self.check_ocioso()
 		# print("nao estou ocioso")
 		self.check_ocioso()
+		self.throughput_timer = time()
 		while self.current_package <= self.total_of_packages:
 			# print("")
 			# print(f"\rpacote atual: {self.current_package}  total de pacotes: {self.total_of_packages}  throughput: {self.throughput}  overhead: {self.overhead}", end="\r")
-			# print(f"pacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}")
+			print(f"pacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}")
 
-			self.throughput_timer = time()
 			self.timer_timeout_start = time()
 			self.read_package()
+			self.com.rx.clearBuffer()
+			self.com.fisica.flush()
+			print("")
 			progressBar(self.current_package, self.total_of_packages, self.throughput, self.overhead, self.msg)
 			
 		filename = self.get_filename()
@@ -152,9 +154,9 @@ class ControlerServer():
 	def check_ocioso(self):
 		if self.ocioso:
 			while self.com.rx.getIsEmpty():
-				print("\rsearching for connection", end="\r")
+				# print("\rsearching for connection", end="\r")
+				print("searching for connection")				
 				sleep(1)
-			print("message received")
 			self.check_msg_0x01()
 		else:
 			self.current_package = 1
@@ -184,6 +186,7 @@ class ControlerServer():
 				self.ocioso = False
 
 	def send_response(self, msg):
+		print(f"msg sent: {msg}")
 		self.msg = msg
 		self.updateLog(msg, 2, "destinatario", False, "enviada")
 #              packageNumber*3                         + msg*1 + totalPackages*3                           + extension*1   + servidor number*1 + payload size*1 = 10bytes
@@ -205,7 +208,8 @@ class ControlerServer():
 				self.close_connection()
 			elif timer1_elapsed > 2:
 				self.com.fisica.flush()
-				self.send_response(bytes([0x06]))
+				self.send_response(bytes([0x04]))
+				self.msg = bytes([0x04])
 				self.timer1_start = time()
 				self.com.rx.clearBuffer()
 
@@ -213,12 +217,12 @@ class ControlerServer():
 	def read_package(self):
 		self.check_timers()
 		head_bytes, size = self.com.getDataTimer(10, self.timer_timeout_start, self.timer1_start)
-
+		print(f"head bytes: {head_bytes}")
 		if size == -1:
 			self.close_connection()
 		elif size == -2:
-			self.msg = bytes([0x06])
-			self.send_response(bytes([0x06]))
+			self.msg = bytes([0x04])
+			self.send_response(bytes([0x04]))
 			self.com.fisica.flush()
 			self.com.rx.clearBuffer()
 			self.timer1_start = time()
@@ -231,8 +235,8 @@ class ControlerServer():
 				if size == -1:
 					self.close_connection()
 				elif size == -2:
-					self.send_response(bytes([0x06]))
-					self.msg = bytes([0x06])
+					self.send_response(bytes([0x04]))
+					self.msg = bytes([0x04])
 					self.com.fisica.flush()
 				else:
 					package_dismounted = PackageDismounter(payload_EOP, head)
@@ -244,7 +248,7 @@ class ControlerServer():
 						self.fullFile += payload
 						self.overhead   = package_dismounted.get_overhead()
 						elapsed_throughput_timer = time() - self.throughput_timer
-						self.throughput =  payload_size/elapsed_throughput_timer
+						self.throughput =  len(self.fullFile)/elapsed_throughput_timer
 			else:
 				self.send_response(bytes([0x06]))
 				self.msg = bytes([0x06])
