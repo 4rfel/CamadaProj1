@@ -62,6 +62,7 @@ class ControlerClient():
         self.current_package = 1
         self.current_package_bytes = self.current_package.to_bytes(3,"big")
         self.leftover = None
+        self.timer_ini = time()
 
         self.com = enlace(serial_name)
         self.com.enable()
@@ -96,6 +97,8 @@ class ControlerClient():
             self.send_package()
             self.timer_resend = self.timer_timeout = time()
             self.check_0x04()
+        
+        print(f"Throughput: {self.file_size/(time() - self.timer_ini)}")
         print("Tamanho do pacote: ",self.file_size)
         print("--- Success ---")
         self.close_connection()
@@ -113,7 +116,7 @@ class ControlerClient():
         with open("client_log.txt", "a") as log:
             log.write(text)
         if end:
-            with open("server_log.txt", "a") as log:
+            with open("client_log.txt", "a") as log:
                 log.write("====================================================================\n\n ")
             
     def send_package(self):
@@ -182,7 +185,8 @@ class ControlerClient():
                 self.updateLog(msg_1, 1, "Recived", True, "Servidor")
                 self.close_connection()
             if msg_1 == 0x04:
-                self.current_package += 1
+                print("\nRecieved t4...\n")
+                self.current_package = head.current_package + 1
                 self.updateLog(msg_1, 1, "Recived", False, "Servidor")
             elif msg_1 == 0x06:
                 self.updateLog(msg_1, 1, "Recived", False, "Servidor")
@@ -242,7 +246,10 @@ extension:
 '''
 
 # print(serial.tools.list_ports.comports()[0])
-serialName = serial.tools.list_ports.comports()[1][0]
+#serialName = serial.tools.list_ports.comports()[0][0]
+#print(f"Porta: {serialName}")
+
+serialName = "/dev/ttyACM0"
 
 root = Tk()
 root.withdraw()
