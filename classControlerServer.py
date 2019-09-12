@@ -62,10 +62,10 @@ def write_curses(string):
 	stdscr.clear()
 
 
-stdscr = curses.initscr()
-curses.noecho()
-curses.cbreak()
-curses.curs_set(True)
+# stdscr = curses.initscr()
+# curses.noecho()
+# curses.cbreak()
+# curses.curs_set(True)
 '''
 	- 0x01: connection request
 	- 0x02: connection granted 
@@ -101,7 +101,6 @@ class ControlerServer():
 
 	def run(self):
 		while self.ocioso:
-
 			# print("estou ocioso")
 			self.check_ocioso()
 		# print("nao estou ocioso")
@@ -109,15 +108,18 @@ class ControlerServer():
 		while self.current_package <= self.total_of_packages:
 			# print("")
 			# print(f"\rpacote atual: {self.current_package}  total de pacotes: {self.total_of_packages}  throughput: {self.throughput}  overhead: {self.overhead}", end="\r")
-			# print(f"pacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}")
+			print(f"pacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}")
 
 			self.throughput_timer = time()
 			self.timer_timeout_start = time()
 			self.read_package()
-			progressBar(self.current_package, self.total_of_packages, self.throughput, self.overhead, self.msg)
+			self.com.rx.clearBuffer()
+			self.com.fisica.flush()
+			print("")
+			# progressBar(self.current_package, self.total_of_packages, self.throughput, self.overhead, self.msg)
 			
-		filename = self.get_filename()
-		# filename = input("\nFilename: ")
+		# filename = self.get_filename()
+		filename = input("\nFilename: ")
 		self.saveFile(filename)
 		self.close_connection()
 
@@ -152,9 +154,9 @@ class ControlerServer():
 	def check_ocioso(self):
 		if self.ocioso:
 			while self.com.rx.getIsEmpty():
-				print("\rsearching for connection", end="\r")
+				# print("\rsearching for connection", end="\r")
+				print("searching for connection")				
 				sleep(1)
-			print("message received")
 			self.check_msg_0x01()
 		else:
 			self.current_package = 1
@@ -184,6 +186,7 @@ class ControlerServer():
 				self.ocioso = False
 
 	def send_response(self, msg):
+		print(f"msg sent: {msg}")
 		self.msg = msg
 		self.updateLog(msg, 2, "destinatario", False, "enviada")
 #              packageNumber*3                         + msg*1 + totalPackages*3                           + extension*1   + servidor number*1 + payload size*1 = 10bytes
@@ -213,7 +216,7 @@ class ControlerServer():
 	def read_package(self):
 		self.check_timers()
 		head_bytes, size = self.com.getDataTimer(10, self.timer_timeout_start, self.timer1_start)
-
+		print(f"head bytes: {head_bytes}")
 		if size == -1:
 			self.close_connection()
 		elif size == -2:
