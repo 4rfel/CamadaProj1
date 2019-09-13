@@ -13176,3 +13176,7 @@ Msg: b'\x06' --enviada  2019/9/7 --- 15:59:11   destinatario: 2
 Msg: b'\x06' --enviada  2019/9/7 --- 15:59:13   destinatario: 2
 Msg: b'\x06' --enviada  2019/9/7 --- 15:59:15   destinatario: 2
 Msg: b'\x06' --enviada  2019/9/7 --- 15:59:17   destinatario: 2
+Msg: 1 --recebido  2019/9/12 --- 16:54:38   remetente: 2
+Msg: b'\x02' --enviada  2019/9/12 --- 16:54:38   destinatario: 2
+Msg: 3 --recebido  2019/9/12 --- 16:54:39   remetente: 2
+Msg: b'\x04' --enviada  2019/9/12 --- 16:54:39   destinatario: 2
