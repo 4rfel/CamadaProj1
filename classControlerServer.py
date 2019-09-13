@@ -63,10 +63,10 @@ def write_curses(string):
 	stdscr.clear()
 
 
-stdscr = curses.initscr()
-curses.noecho()
-curses.cbreak()
-curses.curs_set(True)
+# stdscr = curses.initscr()
+# curses.noecho()
+# curses.cbreak()
+# curses.curs_set(True)
 '''
 	- 0x01: connection request
 	- 0x02: connection granted 
@@ -110,17 +110,17 @@ class ControlerServer():
 		while self.current_package <= self.total_of_packages:
 			# print("")
 			# print(f"\rpacote atual: {self.current_package}  total de pacotes: {self.total_of_packages}  throughput: {self.throughput}  overhead: {self.overhead}", end="\r")
-			# print(f"pacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}")
+			print(f"pacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}   throughput: {self.throughput}  overhead: {self.overhead}")
 
 			self.timer_timeout_start = time()
 			self.read_package()
-			self.com.rx.clearBuffer()
-			self.com.fisica.flush()
-			# print("")
-			progressBar(self.current_package, self.total_of_packages, self.throughput, self.overhead, self.msg)
+			# self.com.rx.clearBuffer()
+			# self.com.fisica.flush()
+			print("")
+			# progressBar(self.current_package, self.total_of_packages, self.throughput, self.overhead, self.msg)
 			
-		filename = self.get_filename()
-		# filename = input("\nFilename: ")
+		# filename = self.get_filename()
+		filename = input("\nFilename: ")
 		self.saveFile(filename)
 		self.close_connection()
 
@@ -155,9 +155,9 @@ class ControlerServer():
 	def check_ocioso(self):
 		if self.ocioso:
 			while self.com.rx.getIsEmpty():
-				write_curses("searching for connection")
+				# write_curses("searching for connection")
 				# print("\rsearching for connection", end="\r")
-				# print("searching for connection")				
+				print("searching for connection")				
 				sleep(1)
 			self.check_msg_0x01()
 		else:
@@ -167,7 +167,8 @@ class ControlerServer():
 			self.timer_timeout_start = time()
 
 	def check_msg_0x01(self):
-		head_bytes = self.com.getData(10)[0]
+		head_bytes = self.com.getData(10+2)[0]
+		print(f"head bytes: {head_bytes}")
 		head = Head(head_bytes)
 		msg = head.get_message()
 		self.updateLog(msg, 2, "remetente", False, "recebido")
@@ -218,7 +219,7 @@ class ControlerServer():
 
 	def read_package(self):
 		self.check_timers()
-		head_bytes, size = self.com.getDataTimer(10, self.timer_timeout_start, self.timer1_start)
+		head_bytes, size = self.com.getDataTimer(10+2, self.timer_timeout_start, self.timer1_start)
 		print(f"head bytes: {head_bytes}")
 		if size == -1:
 			self.close_connection()
