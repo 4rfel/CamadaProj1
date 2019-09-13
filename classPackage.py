@@ -37,8 +37,8 @@ class PackageMounter():
 		crcData0 = Crc64.calc(payload[:64])
 		crcData1 = Crc64.calc(payload[64:])
 
-		crcData0_bytes = crcData0.to_bytes(8, "big")
-		crcData1_bytes = crcData1.to_bytes(8, "big")
+		crcData0_bytes = int(crcData0).to_bytes(8, "big")
+		crcData1_bytes = int(crcData1).to_bytes(8, "big")
 
 		head = head + crcData0_bytes + crcData1_bytes
 
@@ -107,8 +107,11 @@ class PackageDismounter():
 		
 		payload_stuffed = payload_EOP[:self.EOP_position]
 
-		crcData0 = Crc64(payload_stuffed[:64])
-		crcData1 = Crc64(payload_stuffed[64:])
+		crcData0 = Crc64.calc(payload_stuffed[:64])
+		crcData1 = Crc64.calc(payload_stuffed[64:])
+
+		print(f"data0: {crcData0}")
+		print(f"data1: {crcData1}")
 
 		crcData0_bytes = crcData0.to_bytes(8, "big")
 		crcData1_bytes = crcData1.to_bytes(8, "big")
