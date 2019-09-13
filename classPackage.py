@@ -1,4 +1,15 @@
 import time
+import subprocess
+def install(name):
+	subprocess.call(['pip', 'install', name])
+
+try:
+    from crccheck.crc import Crc64
+except:
+    install("crccheck")
+finally:
+    from crccheck.crc import Crc64
+
 
 class PackageMounter():
 	"""
@@ -23,6 +34,14 @@ class PackageMounter():
 		# print(f"payload size: {payload_size}")
 		head = head + bytes([payload_size])
 		#==============================================================
+		crcData0 = Crc64.calc(payload[:64])
+		crcData1 = Crc64.calc(payload[64:])
+
+		crcData0_bytes = crcData0.to_bytes(8, "big")
+		crcData1_bytes = crcData1.to_bytes(8, "big")
+
+		head = head + crcData0_bytes + crcData1_bytes
+
 		# create the package with head payload and EOP
 		self.package = head + payload + EOP
 
@@ -34,7 +53,7 @@ class PackageMounter():
 
 
 class Head():
-# packageNumber*3 + response*1 + totalPackages*3 + extension*1 + servidor number*1 + payload size*1 = 10bytes
+# packageNumber*3 + response*1 + totalPackages*3 + extension*1 + servidor number*1 + payload size*1 + crc64*8 + crc64*8 = 26bytes
 	def __init__(self, head):
 		self.head              = head
 
@@ -44,6 +63,10 @@ class Head():
 		self.extension         = self.head[7]
 		self.server_number     = self.head[8]
 		self.payload_size      = self.head[9]
+		self.crc64             = self.head[10:]
+
+	def get_crc(self):
+		return self.crc64
 
 	def get_extension(self):
 		return self.extension
@@ -83,9 +106,18 @@ class PackageDismounter():
 		self.EOP_position = payload_EOP.find(eop)
 		
 		payload_stuffed = payload_EOP[:self.EOP_position]
+
+		crcData0 = Crc64(payload_stuffed[:64])
+		crcData1 = Crc64(payload_stuffed[64:])
+
+		crcData0_bytes = crcData0.to_bytes(8, "big")
+		crcData1_bytes = crcData1.to_bytes(8, "big")
+
+		crcBytes = crcData0_bytes + crcData1_bytes
+
 		self.payload = payload_stuffed.replace(eop_stuffed, eop)
 
-		if self.EOP_position == -1 or self.EOP_position != self.payload_size:
+		if self.EOP_position != self.payload_size or crcBytes != head.get_crc():
 			self.message_sent = bytes([0x06])
 		else:
 			self.message_sent = bytes([0x04])

@@ -57,6 +57,7 @@ except ImportError:
 finally:
 	import serial
 
+
 def write_curses(string):
 	stdscr.addstr(0, 0, string)
 	stdscr.clear()
@@ -109,13 +110,13 @@ class ControlerServer():
 		while self.current_package <= self.total_of_packages:
 			# print("")
 			# print(f"\rpacote atual: {self.current_package}  total de pacotes: {self.total_of_packages}  throughput: {self.throughput}  overhead: {self.overhead}", end="\r")
-			print(f"pacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}")
+			# print(f"pacote atual: {self.current_package}     total de pacotes: {self.total_of_packages}")
 
 			self.timer_timeout_start = time()
 			self.read_package()
 			self.com.rx.clearBuffer()
 			self.com.fisica.flush()
-			print("")
+			# print("")
 			progressBar(self.current_package, self.total_of_packages, self.throughput, self.overhead, self.msg)
 			
 		filename = self.get_filename()
@@ -154,8 +155,9 @@ class ControlerServer():
 	def check_ocioso(self):
 		if self.ocioso:
 			while self.com.rx.getIsEmpty():
+				write_curses("searching for connection")
 				# print("\rsearching for connection", end="\r")
-				print("searching for connection")				
+				# print("searching for connection")				
 				sleep(1)
 			self.check_msg_0x01()
 		else:
