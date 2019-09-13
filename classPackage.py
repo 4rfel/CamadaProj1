@@ -107,7 +107,7 @@ class PackageDismounter():
 
 		crcData0 = Crc16.calc(payload_stuffed)
 
-		crcBytes = crcData0.to_bytes(8, "big")
+		crcBytes = crcData0.to_bytes(2, "big")
 
 		self.payload = payload_stuffed.replace(eop_stuffed, eop)
 
