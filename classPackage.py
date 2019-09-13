@@ -4,11 +4,11 @@ def install(name):
 	subprocess.call(['pip', 'install', name])
 
 try:
-    from crccheck.crc import Crc64
+    from crccheck.crc import Crc16
 except:
     install("crccheck")
 finally:
-    from crccheck.crc import Crc64
+    from crccheck.crc import Crc16
 
 
 class PackageMounter():
@@ -34,13 +34,11 @@ class PackageMounter():
 		# print(f"payload size: {payload_size}")
 		head = head + bytes([payload_size])
 		#==============================================================
-		crcData0 = Crc64.calc(payload[:64])
-		crcData1 = Crc64.calc(payload[64:])
+		crcData0 = Crc16.calc(payload)
 
-		crcData0_bytes = int(crcData0).to_bytes(8, "big")
-		crcData1_bytes = int(crcData1).to_bytes(8, "big")
+		crcData0_bytes = int(crcData0).to_bytes(2, "big")
 
-		head = head + crcData0_bytes + crcData1_bytes
+		head = head + crcData0_bytes
 
 		# create the package with head payload and EOP
 		self.package = head + payload + EOP
@@ -107,16 +105,9 @@ class PackageDismounter():
 		
 		payload_stuffed = payload_EOP[:self.EOP_position]
 
-		crcData0 = Crc64.calc(payload_stuffed[:64])
-		crcData1 = Crc64.calc(payload_stuffed[64:])
+		crcData0 = Crc16.calc(payload_stuffed)
 
-		print(f"data0: {crcData0}")
-		print(f"data1: {crcData1}")
-
-		crcData0_bytes = crcData0.to_bytes(8, "big")
-		crcData1_bytes = crcData1.to_bytes(8, "big")
-
-		crcBytes = crcData0_bytes + crcData1_bytes
+		crcBytes = crcData0.to_bytes(8, "big")
 
 		self.payload = payload_stuffed.replace(eop_stuffed, eop)
 
